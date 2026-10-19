@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#f5f6f6">
+    <meta name="description" content="Create textured 3D characters from images with your Tripo API key. Generate four views and export FBX, GLTF, OBJ or STL. A personal project by Lens4web." data-i18n-content="seoDescription">
+    <meta name="author" content="Lens4web">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <title data-i18n="seoTitle">Tripo 3D Tool — image to 3D character | Lens4web</title>
+    <link rel="canonical" href="https://tripo3d.lens4web.com/?lang=en">
+    <link rel="alternate" hreflang="en" href="https://tripo3d.lens4web.com/?lang=en">
+    <link rel="alternate" hreflang="ru" href="https://tripo3d.lens4web.com/?lang=ru">
+    <link rel="alternate" hreflang="es" href="https://tripo3d.lens4web.com/?lang=es">
+    <link rel="alternate" hreflang="de" href="https://tripo3d.lens4web.com/?lang=de">
+    <link rel="alternate" hreflang="fr" href="https://tripo3d.lens4web.com/?lang=fr">
+    <link rel="alternate" hreflang="zh" href="https://tripo3d.lens4web.com/?lang=zh">
+    <link rel="alternate" hreflang="x-default" href="https://tripo3d.lens4web.com/">
+    <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Tripo 3D Tool by Lens4web">
+    <meta property="og:title" content="Tripo 3D Tool — image to 3D character | Lens4web" data-i18n-content="seoTitle">
+    <meta property="og:description" content="Create textured 3D characters from images with your Tripo API key. Generate four views and export FBX, GLTF, OBJ or STL. A personal project by Lens4web." data-i18n-content="seoDescription">
+    <meta property="og:url" content="https://tripo3d.lens4web.com/?lang=en">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:image" content="https://tripo3d.lens4web.com/assets/social-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Tripo 3D Tool by Lens4web — image, views, 3D model">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Tripo 3D Tool — image to 3D character | Lens4web" data-i18n-content="seoTitle">
+    <meta name="twitter:description" content="Create textured 3D characters from images with your Tripo API key. Generate four views and export FBX, GLTF, OBJ or STL. A personal project by Lens4web." data-i18n-content="seoDescription">
+    <meta name="twitter:image" content="https://tripo3d.lens4web.com/assets/social-card.png">
+    <script type="application/ld+json" id="structuredData">__STRUCTURED_DATA__</script>
+    <script src="/i18n.js"></script>
+    <script src="/preferences.js"></script>
+    <script defer src="https://pulse.lens4web.com/app-script" data-website-id="8aee3b8d-68f0-4ebb-a9c3-207fb74635de"></script>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" aria-label="Workspace overview" data-i18n-aria-label="overview">
+        <a class="brand" href="/" aria-label="Tripo 3D Tool home" data-i18n-aria-label="home"><img class="brand-mark" src="/assets/icon.svg" width="43" height="43" alt=""><span>tripo<span class="brand-secondary">by Lens4web</span></span></a>
+        <div class="workspace-label" data-i18n="yourWorkspace">YOUR WORKSPACE</div>
+        <a class="nav-item active" href="#workspace"><span class="nav-icon">◇</span> <span data-i18n="generator">Character generator</span> <span class="nav-arrow">↗</span></a>
+        <div class="sidebar-process">
+            <div class="workspace-label" data-i18n="process">FROM IMAGE TO ASSET</div>
+            <ol class="process-list">
+                <li><span>01</span><div><strong data-i18n="prepare">Prepare your character</strong><small data-i18n="prepareHint">A clear image, in any pose</small></div></li>
+                <li><span>02</span><div><strong data-i18n="buildViews">Build consistent views</strong><small data-i18n="viewsHint">Front, left, back and right</small></div></li>
+                <li><span>03</span><div><strong data-i18n="generate3d">Generate in 3D</strong><small data-i18n="geometryHint">Textured geometry with PBR</small></div></li>
+                <li><span>04</span><div><strong data-i18n="export">Export your asset</strong><small data-i18n="exportHint">Ready for your next tool</small></div></li>
+            </ol>
+        </div>
+        <div class="sidebar-note"><span class="small-orbit">✧</span><strong data-i18n="dimension">Your character. A new dimension.</strong><p data-i18n="allSteps">One workspace for every step, from the first image to the final 3D file.</p></div>
+        <a class="docs-link" href="https://developers.tripo3d.ai/en/docs/introduction" target="_blank" rel="noopener noreferrer"><span data-i18n="docs">Tripo API documentation</span> <span>↗</span></a>
+    </aside>
+    <main id="workspace">
+        <header class="topbar"><span><span data-i18n="workspace">Workspace</span> <span class="breadcrumb-slash">/</span> <strong data-i18n="generator">Character generator</strong></span><div class="topbar-controls"><label class="preference-control"><span data-i18n="language">Language</span><select id="languageSelect" aria-label="Language" data-i18n-aria-label="language"><option value="auto" data-i18n="autoLanguage">Browser language</option><option value="en">English</option><option value="ru">Русский</option><option value="es">Español</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="zh">中文</option></select></label><label class="preference-control"><span data-i18n="theme">Theme</span><select id="themeSelect" aria-label="Theme" data-i18n-aria-label="theme"><option value="auto" data-i18n="system">System</option><option value="light" data-i18n="light">Light</option><option value="dark" data-i18n="dark">Dark</option></select></label><span class="connection-pill disconnected" id="connectionStatus" data-i18n="keyNotApplied">API key not applied</span></div></header>
+        <div class="page-content">
+            <div class="page-heading"><div><div class="eyebrow" data-i18n="flow">IMAGE → VIEWS → 3D</div><h1 data-i18n="headline">Bring your character to life.</h1><p data-i18n="intro">Turn a character image into a textured 3D asset, one step at a time.</p></div><span class="page-badge" data-i18n="powered">Using Tripo API</span></div>
+            <div class="workspace-grid">
+                <div class="setup-column">
+                    <section class="card key-card" id="apiKeyCard" aria-labelledby="keyHeading">
+                        <div class="section-heading"><span class="section-number">↗</span><div><span class="api-state-dot" id="keyStateDot" aria-hidden="true"></span><h2 id="keyHeading" data-i18n="connectTitle">Apply your Tripo API key</h2><p data-i18n="connectHint">Use your own key to start creating.</p></div></div>
+                        <label for="apiKey" data-i18n="apiKey">Tripo API key</label>
+                        <div class="inline"><input type="password" id="apiKey" autocomplete="off" spellcheck="false" placeholder="tsk_…"><button id="applyKeyBtn" type="button" data-i18n="apply">Apply key <span aria-hidden="true">→</span></button></div>
+                        <p class="helper" data-i18n="keyHelp">Stored only in server memory. Not saved in browser storage. Disconnect and revoke at any time.</p>
+                        <p class="form-error" id="keyError" role="alert" hidden></p>
+                    </section>
+                    <section class="card configuration-card" id="pipelineCard" hidden aria-labelledby="settingsHeading">
+                        <div class="section-heading"><span class="section-number">01</span><div><h2 id="settingsHeading" data-i18n="setup">Set up your generation</h2><p data-i18n="setupHint">Choose the starting point and the final output.</p></div><div class="key-controls"><span class="api-state-dot connected" aria-hidden="true"></span><button id="changeKeyBtn" class="button-quiet" type="button" data-i18n="disconnect">Disconnect key</button></div></div>
+                        <div class="grid settings-grid">
+                            <div class="field"><label for="inputType" data-i18n="startingPoint">Starting point</label><select id="inputType">
+                                <option value="object" data-i18n="singleObject">Single object / prop → direct 3D</option>
+                                <option value="side" data-i18n="anyPose">Any pose → create a T-pose</option>
+                                <option value="tpose" data-i18n="tposeMode">T-pose / A-pose → create views</option>
+                                <option value="multiview" data-i18n="viewsMode">Separate views → create model</option>
+                            </select></div>
+                            <div class="field"><div class="field-header"><label for="paramModelVersion" data-i18n="model">Generation model</label><button type="button" id="modelInfoBtn" class="info-btn" aria-label="Model guide" data-i18n-aria-label="modelGuide">ℹ</button></div><select id="paramModelVersion">
+                                <option value="v3.1-20260211" data-i18n="standard" data-i18n-prefix="H3.1 · ">H3.1 · Standard</option>
+                                <option value="v3.0-20250812">H3.0</option>
+                                <option value="v2.5-20250123">H2.5</option>
+                                <option value="P2-20260801" data-i18n="premium" data-i18n-prefix="P2 · ">P2 · Premium</option>
+                                <option value="P1-20260311" data-i18n="premium" data-i18n-prefix="P1 · ">P1 · Premium</option>
+                            </select><p id="modelSummaryHint" class="helper"></p></div>
+                            <div class="field"><label for="paramFaceLimit"><span data-i18n="maxFaces">Maximum faces</span> <span class="label-note" data-i18n="optional">optional</span></label><input type="number" id="paramFaceLimit" min="1" step="1" value="8000" placeholder="Adaptive" data-i18n-placeholder="adaptive"><span id="faceHint" class="helper"></span></div>
+                            <div class="field"><label for="paramFormat" data-i18n="format">Export format</label><select id="paramFormat">
+                                <option value="fbx">FBX · Mixamo</option>
+                                <option value="gltf">GLTF · Web</option>
+                                <option value="obj" data-i18n="staticModel" data-i18n-prefix="OBJ · ">OBJ · Static model</option>
+                                <option value="stl" data-i18n="geometryOnly" data-i18n-prefix="STL · ">STL · Geometry only</option>
+                            </select><span class="helper" data-i18n="formatHint">Choose a format for your next tool.</span></div>
+                        </div>
+                        <div class="toggle-grid">
+                            <label class="toggle-option"><input type="checkbox" id="paramBake" checked><span><strong data-i18n="bake">Bake textures</strong><small data-i18n="bakeHint">Combine materials into base textures</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramQuad"><span><strong data-i18n="quad">Quad topology</strong><small data-i18n="quadHint">Available for FBX export</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramRig"><span><strong data-i18n="autoRig">Auto-rig skeleton</strong><small data-i18n="autoRigHint">Rig v3.0 humanoid skeleton for FBX &amp; GLTF</small></span></label>
+                        </div>
+                        <p class="info-note" data-i18n="rigNote">FBX and GLTF support humanoid skeletal auto-rigging with Rig v3.0 (Mixamo convention).</p>
+                        <div class="upload-section">
+                            <div class="section-heading compact"><span class="section-number">02</span><div><h2 data-i18n="addCharacter">Add your character</h2><p id="inputDescription" data-i18n="simpleBackground">Use a clear image on a simple background.</p></div></div>
+                            <div id="singleInput">
+                                <label class="upload-box" for="imageFile"><span class="upload-symbol" aria-hidden="true">↑</span><strong data-i18n="chooseImage">Choose a character image</strong><span data-i18n="imageSize">JPEG or PNG · up to 20 MB</span><img id="sourcePreview" class="source-preview" alt="Selected character" data-i18n-alt="selectedCharacter" hidden></label>
+                                <input type="file" id="imageFile" accept="image/jpeg,image/png">
+                                <p id="sourceFileInfo" class="helper file-info" data-i18n="noImage">No image selected</p>
+                            </div>
+                            <div id="viewInputs" hidden>
+                                <p class="helper" data-i18n="consistentViews">Front and at least one other view are required. Keep pose, lighting and appearance consistent.</p>
+                                <div class="grid views-grid">
+                                    <div class="view-upload"><label for="frontFile"><span data-i18n="front">Front</span> <span class="label-note" data-i18n="required">required</span></label><input type="file" id="frontFile" accept="image/jpeg,image/png"></div>
+                                    <div class="view-upload"><label for="leftFile" data-i18n="leftSide">Left / Side</label><input type="file" id="leftFile" accept="image/jpeg,image/png"></div>
+                                    <div class="view-upload"><label for="backFile" data-i18n="back">Back</label><input type="file" id="backFile" accept="image/jpeg,image/png"></div>
+                                    <div class="view-upload"><label for="rightFile" data-i18n="rightSide">Right / Side</label><input type="file" id="rightFile" accept="image/jpeg,image/png"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="generation-footer"><div class="cost-summary"><span class="eyebrow" data-i18n="estimate">ESTIMATED COST</span><strong id="creditTotal">50 credits</strong><p id="costEstimate" class="helper"></p></div><button id="runBtn" class="button-primary" type="button" data-i18n="generate">Generate character <span aria-hidden="true">↗</span></button></div>
+                        <p id="validationError" class="form-error" role="alert" hidden></p>
+                    </section>
+                    <section class="card quick-guide" aria-labelledby="guideTitle"><h2 id="guideTitle" data-i18n="quickTitle">How to use this tool</h2><ol><li data-i18n="quick1">Apply your own Tripo API key. It is stored temporarily on the server.</li><li data-i18n="quick2">Choose the input pose, upload an image or separate views, and set the export format.</li><li data-i18n="quick3">Check the estimated cost, start generation and download the results. Tripo credits are charged to your account.</li></ol></section>
+                </div>
+                <aside class="activity-column" aria-label="Generation activity" data-i18n-aria-label="activity">
+                    <section class="card activity-card"><div class="activity-header"><h2 data-i18n="activity">Generation activity</h2><span class="status-pill" id="pipelineStatus" data-i18n="ready">Ready</span></div><p class="helper" data-i18n="activityHint">Follow each step as your asset takes shape.</p><div id="logs" role="status" aria-live="polite"><div class="log-empty"><span class="empty-symbol" aria-hidden="true">◈</span><strong data-i18n="readyTitle">Ready when you are</strong><span data-i18n="readyHint">Your generation progress will appear here.</span></div></div></section>
+                    <section class="tips-card"><div class="eyebrow" data-i18n="betterStart">A BETTER START, A BETTER MODEL</div><h3 data-i18n="viewCount">Make every view count.</h3><p data-i18n="tips">Use a full-body image with visible hands and feet. A simple background helps keep the focus on your character.</p><div class="tip-tags"><span data-i18n="silhouette">Clear silhouette</span><span data-i18n="lighting">Even lighting</span><span data-i18n="pose">Consistent pose</span></div></section>
+                    <div class="session-note"><span aria-hidden="true">◎</span><p data-i18n="sessionNote">Images and models appear below as each step completes. Download your files before leaving this session.</p></div>
+                </aside>
+            </div>
+            <section class="card results-card" id="intermediateSection" hidden><div class="section-heading"><span class="section-number">↙</span><div><h2 data-i18n="generatedImages">Generated images</h2><p data-i18n="everyAngle">Your character, from every angle.</p></div></div><div id="intermediateResults"></div></section>
+            <section class="card results-card" id="resultContainer" hidden></section>
+            <footer class="page-footer site-footer"><div class="footer-links"><p><span data-i18n="author">Created by</span> <a href="https://lens4web.com/" target="_blank" rel="noopener noreferrer">Lens4web ↗</a></p><a href="https://lens4web.com/" target="_blank" rel="noopener noreferrer" data-i18n="feedback">Found a problem? Send feedback through Lens4web.</a></div><p data-i18n="responsibility">Developed for personal use. The author accepts no responsibility for errors or the availability of this project.</p><p data-i18n="independent">An independent project using Tripo API.</p></footer>
+        </div>
+    </main>
+</div>
+<dialog id="modelModal" class="modal-dialog" aria-labelledby="modelModalTitle">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h2 id="modelModalTitle" data-i18n="modelGuideTitle">Tripo AI Model Comparison Guide</h2>
+                <p class="helper" data-i18n="modelGuideDesc">Compare architecture, topology, face limits, texturing, and best use cases for each model.</p>
+            </div>
+            <button type="button" id="closeModalBtn" class="modal-close-btn" aria-label="Close" data-i18n-aria-label="close">×</button>
+        </div>
+        <div class="modal-cards-grid">
+            <article class="model-card highlight">
+                <div class="model-card-header">
+                    <div>
+                        <span class="badge premium" data-i18n="premium">Premium</span>
+                        <h3>P2 (P2-20260801)</h3>
+                    </div>
+                    <span class="cost-tag">110 credits</span>
+                </div>
+                <p class="model-role" data-i18n="modelRoleP2">Best for hard-surface objects (glasses, props, tech), clean quad topology for rigging, games, and production.</p>
+                <dl class="model-specs">
+                    <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specP2Topology">Smart Mesh Quad (48–25,000) or Triangle (48–50,000)</dd></div>
+                    <div><dt data-i18n="specTextures">Textures</dt><dd data-i18n="specTextV35Delight">Texture v3.5 PBR with AI Delighting</dd></div>
+                </dl>
+            </article>
+            <article class="model-card">
+                <div class="model-card-header">
+                    <div>
+                        <span class="badge standard" data-i18n="standard">Standard</span>
+                        <h3>H3.1 (v3.1-20260211)</h3>
+                    </div>
+                    <span class="cost-tag">30 credits</span>
+                </div>
+                <p class="model-role" data-i18n="modelRoleH31">High-detail standard model. Excellent for organic shapes, intricate sculpts, and complex clothing.</p>
+                <dl class="model-specs">
+                    <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specH31Topology">Ultra-dense Triangle (1–1,500,000)</dd></div>
+                    <div><dt data-i18n="specTextures">Textures</dt><dd data-i18n="specTextV35Delight">Texture v3.5 PBR with AI Delighting</dd></div>
+                </dl>
+            </article>
+            <article class="model-card">
+                <div class="model-card-header">
+                    <div>
+                        <span class="badge premium" data-i18n="premium">Premium</span>
+                        <h3>P1 (P1-20260311)</h3>
+                    </div>
+                    <span class="cost-tag">110 credits</span>
+                </div>
+                <p class="model-role" data-i18n="modelRoleP1">Crisp geometry and sharp silhouettes with fast generation. Great for stylized assets and low-poly pipelines.</p>
+                <dl class="model-specs">
+                    <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specP1Topology">Optimized Triangle (50–20,000). Quad not supported</dd></div>
+                    <div><dt data-i18n="specTextures">Textures</dt><dd data-i18n="specTextV35">Texture v3.5 PBR</dd></div>
+                </dl>
+            </article>
+            <article class="model-card">
+                <div class="model-card-header">
+                    <div>
+                        <span class="badge standard" data-i18n="standard">Standard</span>
+                        <h3>H3.0 (v3.0-20250812)</h3>
+                    </div>
+                    <span class="cost-tag">30 credits</span>
+                </div>
+                <p class="model-role" data-i18n="modelRoleH30">Reliable, balanced general-purpose model with consistent geometry and standard 1M face ceiling.</p>
+                <dl class="model-specs">
+                    <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specH30Topology">Balanced Triangle (1–1,000,000)</dd></div>
+                    <div><dt data-i18n="specTextures">Textures</dt><dd data-i18n="specTextV35">Texture v3.5 PBR</dd></div>
+                </dl>
+            </article>
+            <article class="model-card">
+                <div class="model-card-header">
+                    <div>
+                        <span class="badge standard" data-i18n="standard">Standard</span>
+                        <h3>H2.5 (v2.5-20250123)</h3>
+                    </div>
+                    <span class="cost-tag">30 credits</span>
+                </div>
+                <p class="model-role" data-i18n="modelRoleH25">Earlier standard model for lightweight backward-compatible generations.</p>
+                <dl class="model-specs">
+                    <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specH25Topology">Legacy Triangle (1–500,000)</dd></div>
+                    <div><dt data-i18n="specTextures">Textures</dt><dd data-i18n="specTextLegacy">Standard legacy textures</dd></div>
+                </dl>
+            </article>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="closeModalFooterBtn" class="button-primary" data-i18n="close">Close</button>
+        </div>
+    </div>
+</dialog>
+<script src="/pipeline.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

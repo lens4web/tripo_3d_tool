@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+.env
+.env.*
+!.env.example
+data.json
+*.log
+coverage/
+dist/
+.ssh/
+.aws/
+*.pem
+*.key

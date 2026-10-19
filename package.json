@@ -1,0 +1,20 @@
+{
+  "name": "tripo-3d-tool",
+  "version": "1.0.0",
+  "description": "Tripo 3D character generation workspace by Lens4web",
+  "engines": { "node": ">=22" },
+  "main": "server.js",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "Lens4web (https://lens4web.com/)",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0"
+  }
+}

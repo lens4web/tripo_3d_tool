@@ -1,0 +1,11 @@
+[Unit]
+Description=Check the Tripo certificate twice daily
+
+[Timer]
+OnCalendar=*-*-* 03,15:15:00
+RandomizedDelaySec=30m
+Persistent=true
+Unit=tripo3d-cert-renew.service
+
+[Install]
+WantedBy=timers.target

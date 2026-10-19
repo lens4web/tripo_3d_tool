@@ -1,0 +1,30 @@
+[Unit]
+Description=Tripo 3D character workspace
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tripo3d
+Group=tripo3d
+WorkingDirectory=/var/www/tripo3d
+EnvironmentFile=/etc/tripo3d.env
+ExecStart=/usr/bin/node /var/www/tripo3d/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+LimitCORE=0
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

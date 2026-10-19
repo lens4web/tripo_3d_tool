@@ -1,0 +1,8 @@
+[Unit]
+Description=Renew the tripo3d.lens4web.com certificate
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/certbot renew --cert-name tripo3d.lens4web.com --quiet --no-directory-hooks --deploy-hook "/usr/sbin/nginx -t && /usr/bin/systemctl reload nginx"
