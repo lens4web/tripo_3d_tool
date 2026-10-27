@@ -73,7 +73,7 @@
                         <p class="form-error" id="keyError" role="alert" hidden></p>
                     </section>
                     <section class="card configuration-card" id="pipelineCard" hidden aria-labelledby="settingsHeading">
-                        <div class="section-heading"><span class="section-number">01</span><div><h2 id="settingsHeading" data-i18n="setup">Set up your generation</h2><p data-i18n="setupHint">Choose the starting point and the final output.</p></div><div class="key-controls"><span class="api-state-dot connected" aria-hidden="true"></span><button id="changeKeyBtn" class="button-quiet" type="button" data-i18n="disconnect">Disconnect key</button></div></div>
+                        <div class="section-heading"><span class="section-number">01</span><div><h2 id="settingsHeading" data-i18n="setup">Set up your generation</h2><p data-i18n="setupHint">Choose the starting point and the final output.</p></div><div class="key-controls"><span class="api-state-dot connected" aria-hidden="true"></span><button id="jsonConfigBtn" class="button-quiet" type="button" data-i18n="jsonConfig">JSON config</button><button id="changeKeyBtn" class="button-quiet" type="button" data-i18n="disconnect">Disconnect key</button></div></div>
                         <div class="grid settings-grid">
                             <div class="field"><label for="inputType" data-i18n="startingPoint">Starting point</label><select id="inputType">
                                 <option value="object" data-i18n="singleObject">Single object / prop → direct 3D</option>
@@ -88,6 +88,10 @@
                                 <option value="P2-20260801" data-i18n="premium" data-i18n-prefix="P2 · ">P2 · Premium</option>
                                 <option value="P1-20260311" data-i18n="premium" data-i18n-prefix="P1 · ">P1 · Premium</option>
                             </select><p id="modelSummaryHint" class="helper"></p></div>
+                            <div class="field" id="geometryQualityField"><label for="paramGeometryQuality" data-i18n="geometryQuality">Geometry detail</label><select id="paramGeometryQuality">
+                                <option value="standard" selected data-i18n="geometryQualityStandard">Standard (balanced)</option>
+                                <option value="detailed" data-i18n="geometryQualityDetailed">Detailed / Ultra (+20 credits)</option>
+                            </select><span class="helper" data-i18n="geometryQualityHint">Ultra mode provides higher polycount (up to 2M for H3.1).</span></div>
                             <div class="field"><label for="paramFaceLimit"><span data-i18n="maxFaces">Maximum faces</span> <span class="label-note" data-i18n="optional">optional</span></label><input type="number" id="paramFaceLimit" min="1" step="1" value="8000" placeholder="Adaptive" data-i18n-placeholder="adaptive"><span id="faceHint" class="helper"></span></div>
                             <div class="field"><label for="paramFormat" data-i18n="format">Export format</label><select id="paramFormat">
                                 <option value="fbx">FBX · Mixamo</option>
@@ -95,13 +99,42 @@
                                 <option value="obj" data-i18n="staticModel" data-i18n-prefix="OBJ · ">OBJ · Static model</option>
                                 <option value="stl" data-i18n="geometryOnly" data-i18n-prefix="STL · ">STL · Geometry only</option>
                             </select><span class="helper" data-i18n="formatHint">Choose a format for your next tool.</span></div>
+                            <div class="field"><label for="paramTextureQuality" data-i18n="textureQuality">Texture quality</label><select id="paramTextureQuality">
+                                <option value="fast" data-i18n="textureQualityFast">Fast (speed tier)</option>
+                                <option value="standard" selected data-i18n="textureQualityStandard">Standard</option>
+                                <option value="detailed" data-i18n="textureQualityDetailed">Detailed / HD (+10 credits)</option>
+                                <option value="extreme" data-i18n="textureQualityExtreme">Extreme / 8K (+20 credits)</option>
+                            </select><span class="helper" data-i18n="textureQualityHint">Fidelity of generated textures.</span></div>
+                            <div class="field"><label for="paramTextureSize" data-i18n="textureSize">Texture resolution</label><select id="paramTextureSize">
+                                <option value="1024" data-i18n="textureSize1k">1024 · Web / Three.js</option>
+                                <option value="2048" selected data-i18n="textureSize2k">2048 · Standard 2K</option>
+                                <option value="4096" data-i18n="textureSize4k">4096 · Ultra 4K</option>
+                            </select><span class="helper" data-i18n="textureSizeHint">Resolution for baked texture maps.</span></div>
                         </div>
                         <div class="toggle-grid">
                             <label class="toggle-option"><input type="checkbox" id="paramBake" checked><span><strong data-i18n="bake">Bake textures</strong><small data-i18n="bakeHint">Combine materials into base textures</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramDelight" checked><span><strong data-i18n="delight">Delight textures</strong><small data-i18n="delightHint">Removes baked lighting from input images</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramQuad"><span><strong data-i18n="quad">Quad topology</strong><small data-i18n="quadHint">Available for FBX export</small></span></label>
-                            <label class="toggle-option"><input type="checkbox" id="paramRig"><span><strong data-i18n="autoRig">Auto-rig skeleton</strong><small data-i18n="autoRigHint">Rig v3.0 humanoid skeleton for FBX &amp; GLTF</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramForceSymmetry"><span><strong data-i18n="forceSymmetry">Force symmetry</strong><small data-i18n="forceSymmetryHint">Enforce bilateral symmetry on quad mesh</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramSegment"><span><strong data-i18n="segmentParts">Segment parts</strong><small data-i18n="segmentPartsHint">Split into separate components (+40 credits)</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramAutofix"><span><strong data-i18n="autofix">AI image autofix</strong><small data-i18n="autofixHint">Enhance input resolution and contrast before 3D generation</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramSmartLowPoly"><span><strong data-i18n="smartLowPoly">Smart Low-Poly</strong><small data-i18n="smartLowPolyHint">Clean, hand-crafted style topology (+10 credits)</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramGenerateParts"><span><strong data-i18n="generateParts">Generate editable parts</strong><small data-i18n="generatePartsHint">Splits components directly during generation (+20 credits)</small></span></label>
+                            <label class="toggle-option" id="rigOption"><input type="checkbox" id="paramRig"><span><strong data-i18n="autoRig">Auto-rig skeleton</strong><small data-i18n="autoRigHint">Rig v3.0 humanoid skeleton for FBX &amp; GLTF</small></span></label>
                         </div>
-                        <p class="info-note" data-i18n="rigNote">FBX and GLTF support humanoid skeletal auto-rigging with Rig v3.0 (Mixamo convention).</p>
+                        <div class="field" id="rigSpecField" hidden style="margin-bottom: 18px; max-width: 320px;">
+                            <label for="paramRigSpec" data-i18n="rigSpec">Rig skeleton convention</label>
+                            <select id="paramRigSpec">
+                                <option value="mixamo" selected>Mixamo</option>
+                                <option value="tripo">Tripo Native</option>
+                                <option value="actorcore">ActorCore</option>
+                                <option value="unity">Unity Humanoid</option>
+                                <option value="unreal">Unreal Mannequin</option>
+                                <option value="vrm">VRM 1.0</option>
+                            </select>
+                            <span class="helper" data-i18n="rigSpecHint">Target bone naming convention for your 3D engine.</span>
+                        </div>
+                        <p class="info-note" id="rigNote" data-i18n="rigNote">FBX and GLTF support humanoid skeletal auto-rigging with Rig v3.0 (Mixamo convention).</p>
                         <div class="upload-section">
                             <div class="section-heading compact"><span class="section-number">02</span><div><h2 data-i18n="addCharacter">Add your character</h2><p id="inputDescription" data-i18n="simpleBackground">Use a clear image on a simple background.</p></div></div>
                             <div id="singleInput">
@@ -170,7 +203,7 @@
                 </div>
                 <p class="model-role" data-i18n="modelRoleH31">High-detail standard model. Excellent for organic shapes, intricate sculpts, and complex clothing.</p>
                 <dl class="model-specs">
-                    <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specH31Topology">Ultra-dense Triangle (1–1,500,000)</dd></div>
+                    <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specH31Topology">Ultra-dense Triangle (up to 2,000,000) or Quad (up to 150,000)</dd></div>
                     <div><dt data-i18n="specTextures">Textures</dt><dd data-i18n="specTextV35Delight">Texture v3.5 PBR with AI Delighting</dd></div>
                 </dl>
             </article>
@@ -180,12 +213,12 @@
                         <span class="badge premium" data-i18n="premium">Premium</span>
                         <h3>P1 (P1-20260311)</h3>
                     </div>
-                    <span class="cost-tag">110 credits</span>
+                    <span class="cost-tag">50 credits</span>
                 </div>
                 <p class="model-role" data-i18n="modelRoleP1">Crisp geometry and sharp silhouettes with fast generation. Great for stylized assets and low-poly pipelines.</p>
                 <dl class="model-specs">
                     <div><dt data-i18n="specTopology">Topology</dt><dd data-i18n="specP1Topology">Optimized Triangle (50–20,000). Quad not supported</dd></div>
-                    <div><dt data-i18n="specTextures">Textures</dt><dd data-i18n="specTextV35">Texture v3.5 PBR</dd></div>
+                    <div><dt data-i18n="specCost">Base cost</dt><dd data-i18n="specP1Cost">50 credits with standard texture (40 without texture)</dd></div>
                 </dl>
             </article>
             <article class="model-card">
@@ -219,6 +252,26 @@
         </div>
         <div class="modal-footer">
             <button type="button" id="closeModalFooterBtn" class="button-primary" data-i18n="close">Close</button>
+        </div>
+    </div>
+</dialog>
+<dialog id="jsonModal" class="modal-dialog" aria-labelledby="jsonModalTitle">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h2 id="jsonModalTitle" data-i18n="jsonConfigTitle">Import / Export JSON configuration</h2>
+                <p class="helper" data-i18n="jsonConfigDesc">Paste parameters as JSON to apply them, or copy current settings.</p>
+            </div>
+            <button type="button" id="closeJsonModalBtn" class="modal-close-btn" aria-label="Close" data-i18n-aria-label="close">×</button>
+        </div>
+        <div style="padding: 16px 0;">
+            <textarea id="jsonConfigText" style="width: 100%; min-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical;" spellcheck="false" placeholder="{\n  &quot;model&quot;: &quot;v3.1-20260211&quot;,\n  &quot;geometry_quality&quot;: &quot;detailed&quot;,\n  &quot;texture_quality&quot;: &quot;detailed&quot;\n}" data-i18n-placeholder="jsonPlaceholder"></textarea>
+            <p id="jsonError" class="form-error" role="alert" hidden></p>
+            <p id="jsonSuccess" class="helper" style="color: #257849; margin-top: 8px;" hidden></p>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" id="copyJsonBtn" class="button-quiet" data-i18n="copyJson">Copy current JSON</button>
+            <button type="button" id="applyJsonBtn" class="button-primary" data-i18n="applyJson">Apply JSON</button>
         </div>
     </div>
 </dialog>

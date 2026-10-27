@@ -104,6 +104,7 @@ if (modelModal) {
 }
 
 let previewUrl;
+let customTripoParams = {};
 el('imageFile').addEventListener('change', () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     const file = el('imageFile').files[0];
@@ -123,15 +124,27 @@ function settings() {
         faceLimit: el('paramFaceLimit').value.trim(),
         format: el('paramFormat').value,
         bake: el('paramBake').checked,
+        textureSize: el('paramTextureSize') ? Number(el('paramTextureSize').value) : 2048,
+        textureQuality: el('paramTextureQuality') ? el('paramTextureQuality').value : 'standard',
+        geometryQuality: el('paramGeometryQuality') ? el('paramGeometryQuality').value : 'standard',
         quad: el('paramQuad').checked,
-        autoRig: el('paramRig') ? el('paramRig').checked : false
+        forceSymmetry: el('paramForceSymmetry') ? el('paramForceSymmetry').checked : false,
+        delight: el('paramDelight') ? el('paramDelight').checked : true,
+        enableImageAutofix: el('paramAutofix') ? el('paramAutofix').checked : false,
+        smartLowPoly: el('paramSmartLowPoly') ? el('paramSmartLowPoly').checked : false,
+        generateParts: el('paramGenerateParts') ? el('paramGenerateParts').checked : false,
+        segment: el('paramSegment') ? el('paramSegment').checked : false,
+        autoRig: el('paramRig') ? el('paramRig').checked : false,
+        rigSpec: el('paramRigSpec') ? el('paramRigSpec').value : 'mixamo',
+        customParams: customTripoParams
     };
 }
 function syncOptions() {
     el('validationError').hidden = true;
     const inputMode = el('inputType').value;
     const isMultiview = inputMode === 'multiview';
-    const descKey = inputMode === 'object' ? 'singleObjectHint' : (isMultiview ? 'separateImages' : 'simpleBackground');
+    const isObject = inputMode === 'object';
+    const descKey = isObject ? 'singleObjectHint' : (isMultiview ? 'separateImages' : 'simpleBackground');
     el('inputDescription').textContent = t(descKey);
     el('singleInput').hidden = isMultiview;
     el('viewInputs').hidden = !isMultiview;
@@ -142,25 +155,61 @@ function syncOptions() {
         'v3.0-20250812': 'modelHintH30',
         'v2.5-20250123': 'modelHintH25'
     };
-    const hintKey = modelHints[el('paramModelVersion').value];
+    const model = el('paramModelVersion').value;
+    const hintKey = modelHints[model];
     const modelHintNode = el('modelSummaryHint');
     if (modelHintNode && hintKey) {
         translatedNode(modelHintNode, hintKey);
     }
     const quad = el('paramQuad');
-    const isP1 = el('paramModelVersion').value === 'P1-20260311';
-    if (el('paramFormat').value !== 'fbx' || isP1) quad.checked = false;
-    quad.disabled = el('paramFormat').value !== 'fbx' || isP1;
+    const isP1 = model === 'P1-20260311';
+    const isH25 = model === 'v2.5-20250123';
+    const canQuad = el('paramFormat').value === 'fbx' && !isP1 && !isH25;
+    if (!canQuad) quad.checked = false;
+    quad.disabled = !canQuad;
+    const forceSymmetry = el('paramForceSymmetry');
+    if (forceSymmetry) {
+        if (!quad.checked) forceSymmetry.checked = false;
+        forceSymmetry.disabled = !quad.checked;
+    }
+    const geomQuality = el('paramGeometryQuality');
+    const geomQualityField = el('geometryQualityField');
+    const supportsGeomQuality = ['v3.1-20260211', 'v3.0-20250812'].includes(model);
+    if (geomQuality) {
+        geomQuality.disabled = !supportsGeomQuality;
+        if (!supportsGeomQuality) geomQuality.value = 'standard';
+    }
+    if (geomQualityField) geomQualityField.hidden = !supportsGeomQuality;
     const bake = el('paramBake');
     if (el('paramFormat').value === 'stl') bake.checked = false;
     bake.disabled = el('paramFormat').value === 'stl';
+    const textureSize = el('paramTextureSize');
+    if (textureSize) {
+        textureSize.disabled = !bake.checked || el('paramFormat').value === 'stl';
+    }
     const rig = el('paramRig');
+    const rigOption = el('rigOption');
+    const rigNote = el('rigNote');
+    const rigSpecField = el('rigSpecField');
     if (rig) {
-        const canRig = ['fbx', 'gltf'].includes(el('paramFormat').value);
+        const canRig = ['fbx', 'gltf'].includes(el('paramFormat').value) && !isObject;
         if (!canRig) rig.checked = false;
         rig.disabled = !canRig;
     }
-    const [min, max] = P.faceRange(el('paramModelVersion').value, quad.checked);
+    if (rigOption) rigOption.hidden = isObject;
+    if (rigNote) rigNote.hidden = isObject;
+    if (rigSpecField) rigSpecField.hidden = !rig?.checked || isObject;
+
+    const smartLowPoly = el('paramSmartLowPoly')?.checked;
+    const generateParts = el('paramGenerateParts');
+    if (generateParts) {
+        if (generateParts.checked && (quad.checked || smartLowPoly)) {
+            generateParts.checked = false;
+        }
+        generateParts.disabled = quad.checked || smartLowPoly;
+    }
+
+    const [min, max] = P.faceRange(model, quad.checked, geomQuality?.value, smartLowPoly);
     el('paramFaceLimit').min = min;
     el('paramFaceLimit').max = max;
     const rawFaces = el('paramFaceLimit').value.trim();
@@ -176,15 +225,105 @@ function syncOptions() {
         image: cost.image,
         views: cost.multiview,
         model: cost.model,
+        texture: cost.texture,
+        segment: cost.segmentation,
         export: cost.conversion,
         rig: cost.rig
     });
 }
-['inputType', 'paramModelVersion', 'paramFormat', 'paramQuad', 'paramRig', 'paramBake'].forEach(id => {
+['inputType', 'paramModelVersion', 'paramFormat', 'paramQuad', 'paramForceSymmetry', 'paramRig', 'paramRigSpec', 'paramBake', 'paramDelight', 'paramAutofix', 'paramSmartLowPoly', 'paramGenerateParts', 'paramTextureQuality', 'paramTextureSize', 'paramGeometryQuality', 'paramSegment'].forEach(id => {
     const node = el(id);
     if (node) node.addEventListener('change', syncOptions);
 });
 el('paramFaceLimit').addEventListener('input', syncOptions);
+
+const jsonModal = el('jsonModal');
+const jsonConfigBtn = el('jsonConfigBtn');
+const closeJsonModalBtn = el('closeJsonModalBtn');
+const applyJsonBtn = el('applyJsonBtn');
+const copyJsonBtn = el('copyJsonBtn');
+const jsonConfigText = el('jsonConfigText');
+const jsonError = el('jsonError');
+const jsonSuccess = el('jsonSuccess');
+
+if (jsonConfigBtn && jsonModal) {
+    jsonConfigBtn.addEventListener('click', () => {
+        if (jsonError) jsonError.hidden = true;
+        if (jsonSuccess) jsonSuccess.hidden = true;
+        if (jsonConfigText) jsonConfigText.value = P.exportJsonConfig(settings());
+        if (typeof jsonModal.showModal === 'function') jsonModal.showModal();
+        else jsonModal.hidden = false;
+    });
+}
+const closeJsonModal = () => {
+    if (jsonModal) {
+        if (typeof jsonModal.close === 'function') jsonModal.close();
+        else jsonModal.hidden = true;
+    }
+};
+if (closeJsonModalBtn) closeJsonModalBtn.addEventListener('click', closeJsonModal);
+if (jsonModal) {
+    jsonModal.addEventListener('click', event => {
+        if (event.target === jsonModal) closeJsonModal();
+    });
+}
+if (copyJsonBtn) {
+    copyJsonBtn.addEventListener('click', async () => {
+        const text = jsonConfigText ? jsonConfigText.value : P.exportJsonConfig(settings());
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch {
+            if (jsonConfigText) {
+                jsonConfigText.select();
+                try { document.execCommand('copy'); } catch {}
+            }
+        }
+        if (jsonSuccess) {
+            jsonSuccess.textContent = t('jsonCopied');
+            jsonSuccess.hidden = false;
+        }
+    });
+}
+if (applyJsonBtn) {
+    applyJsonBtn.addEventListener('click', () => {
+        if (jsonError) jsonError.hidden = true;
+        if (jsonSuccess) jsonSuccess.hidden = true;
+        try {
+            const raw = jsonConfigText.value.trim();
+            if (!raw) throw new Error('JSON is empty');
+            const cfg = P.parseJsonConfig(raw);
+            if (cfg.inputType && el('inputType')) el('inputType').value = cfg.inputType;
+            if (cfg.model && el('paramModelVersion')) el('paramModelVersion').value = cfg.model;
+            if (cfg.format && el('paramFormat')) el('paramFormat').value = cfg.format.toLowerCase();
+            if (cfg.faceLimit !== undefined && el('paramFaceLimit')) el('paramFaceLimit').value = cfg.faceLimit === null ? '' : String(cfg.faceLimit);
+            if (cfg.bake !== undefined && el('paramBake')) el('paramBake').checked = !!cfg.bake;
+            if (cfg.textureSize && el('paramTextureSize')) el('paramTextureSize').value = String(cfg.textureSize);
+            if (cfg.textureQuality && el('paramTextureQuality')) el('paramTextureQuality').value = cfg.textureQuality;
+            if (cfg.geometryQuality && el('paramGeometryQuality')) el('paramGeometryQuality').value = cfg.geometryQuality;
+            if (cfg.quad !== undefined && el('paramQuad')) el('paramQuad').checked = !!cfg.quad;
+            if (cfg.forceSymmetry !== undefined && el('paramForceSymmetry')) el('paramForceSymmetry').checked = !!cfg.forceSymmetry;
+            if (cfg.delight !== undefined && el('paramDelight')) el('paramDelight').checked = !!cfg.delight;
+            if (cfg.enableImageAutofix !== undefined && el('paramAutofix')) el('paramAutofix').checked = !!cfg.enableImageAutofix;
+            if (cfg.smartLowPoly !== undefined && el('paramSmartLowPoly')) el('paramSmartLowPoly').checked = !!cfg.smartLowPoly;
+            if (cfg.generateParts !== undefined && el('paramGenerateParts')) el('paramGenerateParts').checked = !!cfg.generateParts;
+            if (cfg.segment !== undefined && el('paramSegment')) el('paramSegment').checked = !!cfg.segment;
+            if (cfg.autoRig !== undefined && el('paramRig')) el('paramRig').checked = !!cfg.autoRig;
+            if (cfg.rigSpec && el('paramRigSpec')) el('paramRigSpec').value = cfg.rigSpec;
+            customTripoParams = cfg.customParams || {};
+            syncOptions();
+            if (jsonSuccess) {
+                jsonSuccess.textContent = t('jsonApplied');
+                jsonSuccess.hidden = false;
+            }
+            setTimeout(closeJsonModal, 800);
+        } catch (err) {
+            if (jsonError) {
+                jsonError.textContent = err.message;
+                jsonError.hidden = false;
+            }
+        }
+    });
+}
 syncOptions();
 
 function log(key, values = {}, kind = '') {
@@ -392,7 +531,18 @@ runBtn.addEventListener('click', async () => {
             logCredits(modelTask, 'model3d');
         }
 
-        if (selected.autoRig || (selected.format === 'fbx' && selected.inputType !== 'object')) {
+        if (selected.segment) {
+            log('segmenting');
+            const segId = taskId(await postApi('/api/v3/mesh/segment', P.segmentPayload(modelTaskId)));
+            const segTask = await pollTask(segId);
+            modelTaskId = segTask.task_id;
+            const segUrl = P.resultUrl(segTask.output, 'model_url');
+            showModel(segUrl, 'segmented_model.glb', 'downloadSegmented');
+            logCredits(segTask, 'segmentStep');
+            log('segmentComplete', {}, 'success');
+        }
+
+        if ((selected.autoRig || selected.format === 'fbx') && selected.inputType !== 'object') {
             try {
                 log('rigCheck');
                 const checkId = taskId(await postApi('/api/v3/animations/rig-check', { input: modelTaskId }));
@@ -407,12 +557,12 @@ runBtn.addEventListener('click', async () => {
             }
         }
 
-        if (selected.autoRig) {
+        if (selected.autoRig && selected.inputType !== 'object') {
             log('rigging');
             const rigFormat = selected.format === 'fbx' ? 'fbx' : 'glb';
             const rigId = taskId(await postApi('/api/v3/animations/rig', {
                 model: 'v3.0-20260909',
-                spec: 'mixamo',
+                spec: selected.rigSpec || 'mixamo',
                 input: modelTaskId,
                 out_format: rigFormat
             }));

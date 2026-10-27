@@ -102,9 +102,10 @@ function createApp(options = {}) {
         const isCreate = req.method === 'POST' && [
             '/files', '/generation/image-to-image', '/generation/image-to-multiview',
             '/generation/image-to-model', '/generation/multiview-to-model',
-            '/models/convert', '/models/texture',
+            '/generation/text-to-model', '/generation/image-to-splat', '/generation/edit-multiview',
+            '/models/convert', '/models/texture', '/models/import', '/models/refine', '/models/stylize',
             '/animations/rig-check', '/animations/rig', '/animations/retarget',
-            '/mesh/uv', '/mesh/decimate'
+            '/mesh/uv', '/mesh/decimate', '/mesh/segment', '/mesh/smartsegment', '/mesh/complete'
         ].includes(req.path);
         if (!isQuery && !isCreate) return res.status(404).json({ code: -1, message: 'Unsupported API route' });
         if (isCreate) {

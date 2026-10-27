@@ -33,17 +33,28 @@ class Element {
 function browser(mode) {
     const ids = ['apiKey', 'pipelineCard', 'apiKeyCard', 'runBtn', 'logs', 'applyKeyBtn',
         'changeKeyBtn', 'inputType', 'paramModelVersion', 'paramFaceLimit', 'paramFormat',
-        'paramBake', 'paramQuad', 'paramRig', 'singleInput', 'viewInputs', 'faceHint', 'costEstimate',
+        'paramBake', 'paramQuad', 'paramForceSymmetry', 'paramSegment', 'paramRig',
+        'paramTextureQuality', 'paramTextureSize', 'paramGeometryQuality', 'geometryQualityField',
+        'paramDelight', 'paramAutofix', 'paramSmartLowPoly', 'paramGenerateParts',
+        'paramRigSpec', 'rigSpecField', 'rigOption', 'rigNote',
+        'singleInput', 'viewInputs', 'faceHint', 'costEstimate',
         'imageFile', 'frontFile', 'leftFile', 'backFile', 'rightFile', 'intermediateResults',
         'intermediateSection', 'resultContainer', 'pipelineStatus', 'connectionStatus', 'keyError',
         'sourcePreview', 'sourceFileInfo', 'creditTotal', 'validationError', 'inputDescription', 'keyStateDot',
-        'modelInfoBtn', 'modelModal', 'closeModalBtn', 'closeModalFooterBtn', 'modelSummaryHint'];
+        'modelInfoBtn', 'modelModal', 'closeModalBtn', 'closeModalFooterBtn', 'modelSummaryHint',
+        'jsonModal', 'jsonConfigBtn', 'closeJsonModalBtn', 'applyJsonBtn', 'copyJsonBtn',
+        'jsonConfigText', 'jsonError', 'jsonSuccess'];
     const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
     elements.inputType.value = mode;
     elements.paramModelVersion.value = 'v3.1-20260211';
     elements.paramFaceLimit.value = '8000';
     elements.paramFormat.value = 'fbx';
     elements.paramBake.checked = true;
+    elements.paramDelight.checked = true;
+    elements.paramTextureQuality.value = 'standard';
+    elements.paramTextureSize.value = '2048';
+    elements.paramGeometryQuality.value = 'standard';
+    elements.paramRigSpec.value = 'mixamo';
     elements.pipelineCard.controls = ids.filter(id => id.endsWith('File') || id === 'imageFile' || id.startsWith('param') || id === 'inputType').map(id => elements[id]);
     const picture = new File(['png'], 'character.png', { type: 'image/png' });
     if (mode === 'multiview') {
@@ -58,6 +69,7 @@ function browser(mode) {
         pose: { task_id: 'pose', status: 'success', output: { generated_image_url: 'https://cdn.tripo3d.ai/pose.png' }, credits_consumed: 5 },
         views: { task_id: 'views', status: 'success', output: Object.fromEntries(P.VIEWS.map(view => [`${view}_view_url`, `https://cdn.tripo3d.ai/${view}.png`])) },
         model: { task_id: 'model', status: 'success', output: { model_url: 'https://cdn.tripo3d.ai/model.glb' } },
+        segment: { task_id: 'segment', status: 'success', output: { model_url: 'https://cdn.tripo3d.ai/model_segmented.glb' }, credits_consumed: 40 },
         check: { task_id: 'check', status: 'success', output: { riggable: true, rig_type: 'biped' } },
         rig: { task_id: 'rig', status: 'success', output: { model_url: 'https://cdn.tripo3d.ai/model_rigged.fbx' }, credits_consumed: 30 },
         converted: { task_id: 'converted', status: 'success', output: { model_url: 'https://cdn.tripo3d.ai/model.fbx' } }
@@ -79,6 +91,7 @@ function browser(mode) {
         if (url.endsWith('image-to-multiview')) return json({ task_id: 'views' });
         if (url.endsWith('image-to-model')) return json({ task_id: 'model' });
         if (url.endsWith('multiview-to-model')) return json({ task_id: 'model' });
+        if (url.endsWith('mesh/segment')) return json({ task_id: 'segment' });
         if (url.endsWith('rig-check')) return json({ task_id: 'check' });
         if (url.endsWith('animations/rig')) return json({ task_id: 'rig' });
         if (url.endsWith('models/convert')) return json({ task_id: 'converted' });
@@ -178,7 +191,7 @@ test('browser pipeline triggers Rig v3.0 when autoRig is enabled', async () => {
     elements.paramRig.checked = true;
     elements.paramFormat.value = 'fbx';
     elements.paramFormat.listeners.change();
-    assert.match(elements.creditTotal.textContent, /75 credits/);
+    assert.match(elements.creditTotal.textContent, /70 credits/);
     await elements.runBtn.listeners.click();
     const rigCall = calls.find(call => call.url.endsWith('animations/rig'));
     assert.ok(rigCall, 'animations/rig was called');
@@ -270,5 +283,83 @@ test('model guide modal opens and closes and modelSummaryHint reacts to model ch
     assert.equal(elements.modelModal.open, true);
     elements.closeModalFooterBtn.listeners.click();
     assert.equal(elements.modelModal.open, false);
+});
+
+test('browser pipeline supports force symmetry, detailed texture, and mesh segmentation', async () => {
+    const { elements, calls } = browser('object');
+    assert.equal(elements.rigOption.hidden, true);
+    assert.equal(elements.rigNote.hidden, true);
+
+    // Symmetry requires quad
+    elements.paramForceSymmetry.checked = true;
+    elements.paramFormat.value = 'gltf';
+    elements.paramFormat.listeners.change();
+    assert.equal(elements.paramQuad.checked, false);
+    assert.equal(elements.paramForceSymmetry.checked, false);
+    assert.equal(elements.paramForceSymmetry.disabled, true);
+
+    elements.paramFormat.value = 'fbx';
+    elements.paramFormat.listeners.change();
+    elements.paramQuad.checked = true;
+    elements.paramQuad.listeners.change();
+    assert.equal(elements.paramForceSymmetry.disabled, false);
+    elements.paramForceSymmetry.checked = true;
+    elements.paramForceSymmetry.listeners.change();
+
+    elements.paramTextureQuality.value = 'detailed';
+    elements.paramTextureQuality.listeners.change();
+    elements.paramTextureSize.value = '1024';
+    elements.paramTextureSize.listeners.change();
+    elements.paramSegment.checked = true;
+    elements.paramSegment.listeners.change();
+
+    // Base object (35) + quad conversion diff (5) + detailed texture (10) + segmentation (40) = 90
+    assert.match(elements.creditTotal.textContent, /90 credits/);
+
+    await elements.runBtn.listeners.click();
+
+    const imageToModelCall = calls.find(call => call.url.endsWith('image-to-model'));
+    assert.ok(imageToModelCall);
+    assert.equal(imageToModelCall.payload.texture_quality, 'detailed');
+
+    const segmentCall = calls.find(call => call.url.endsWith('mesh/segment'));
+    assert.ok(segmentCall, 'mesh/segment was called');
+    assert.equal(segmentCall.payload.input, 'model');
+
+    const convertCall = calls.find(call => call.url.endsWith('models/convert'));
+    assert.ok(convertCall);
+    assert.equal(convertCall.payload.input, 'segment', 'convert input is the segmented task id');
+    assert.equal(convertCall.payload.quad, true);
+    assert.equal(convertCall.payload.force_symmetry, true);
+    assert.equal(convertCall.payload.texture_size, 1024);
+});
+
+test('JSON configuration modal opens, copies, and applies settings to form', async () => {
+    const { elements } = browser('side');
+    assert.equal(elements.jsonModal.open, false);
+    elements.jsonConfigBtn.listeners.click();
+    assert.equal(elements.jsonModal.open, true);
+    assert.ok(elements.jsonConfigText.value.includes('v3.1-20260211'));
+
+    elements.jsonConfigText.value = JSON.stringify({
+        model: 'P2-20260801',
+        format: 'fbx',
+        face_limit: 20000,
+        quad: true,
+        texture_quality: 'extreme',
+        geometry_quality: 'standard',
+        spec: 'vrm',
+        auto_rig: true
+    });
+    elements.applyJsonBtn.listeners.click();
+
+    assert.equal(elements.paramModelVersion.value, 'P2-20260801');
+    assert.equal(elements.paramFormat.value, 'fbx');
+    assert.equal(elements.paramFaceLimit.value, '20000');
+    assert.equal(elements.paramQuad.checked, true);
+    assert.equal(elements.paramTextureQuality.value, 'extreme');
+    assert.equal(elements.paramRig.checked, true);
+    assert.equal(elements.paramRigSpec.value, 'vrm');
+    assert.equal(elements.jsonSuccess.hidden, false);
 });
 

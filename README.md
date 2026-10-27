@@ -2,7 +2,7 @@
 
 [![Node.js Version](https://img.shields.io/badge/Node.js-22%20%7C%2024%20LTS-68a063.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Tripo API](https://img.shields.io/badge/Tripo%20API-v3.0%20%7C%20v3.5-0070f3.svg)](https://developers.tripo3d.ai/)
-[![Tests](https://img.shields.io/badge/Tests-28%2F28%20Passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-31%2F31%20Passing-brightgreen.svg)]()
 [![Security Audit](https://img.shields.io/badge/Vulnerabilities-0%20(npm%20audit)-success.svg)]()
 [![Security Architecture](https://img.shields.io/badge/Security-Zero--Trust%20In--Memory-blue.svg)](SECURITY.md)
 
@@ -59,12 +59,17 @@ flowchart LR
 - **Pre-flight Riggability Check**: Automatic non-destructive validation via `/animations/rig-check` confirming biped skeleton topology before processing characters.
 - **Export Formats**: Rigged characters export seamlessly as FBX and GLTF/GLB for direct import into Blender, Unity, Unreal Engine, and Mixamo.
 
-### 4. Flexible Multi-View Inputs
+### 4. Direct JSON Configuration & Preset Sharing
+- **Paste & Apply JSON**: Configure complex parameters (including advanced parameters like `delight`, `enable_image_autofix`, `geometry_quality`, `texture_quality`, `rig_spec`, `smart_low_poly`, etc.) instantly by pasting raw JSON payloads or presets.
+- **Copy Current JSON**: Export current UI configuration as clean, portable JSON with one click.
+- **Flexible Schema Parsing**: Accepts both official Tripo V3 snake_case parameters (`geometry_quality`, `texture_quality`, `face_limit`, `auto_rig`, etc.) and camelCase application settings, preserving any extra custom fields.
+
+### 5. Flexible Multi-View Inputs
 - **Any Pose**: Upload any reference picture; the pipeline automatically normalizes it into a standard T-pose before 3D extraction.
 - **T-pose / A-pose**: Generates consistent Front, Left, Back, and Right orthographic angle previews.
 - **Separate Views**: Upload up to four custom angles (Front + Left, Back, Right) for precise likeness control.
 
-### 5. Zero-Trust Security Architecture
+### 6. Zero-Trust Security Architecture
 Designed from the ground up to protect host infrastructure in public deployments:
 - **Zero Browser Key Persistence**: API keys are submitted only to an isolated session endpoint and **never stored in `localStorage`, `sessionStorage`, or cookies**. Legacy entries are proactively purged.
 - **In-Memory Ephemeral Sessions**: Session tokens use cryptographically secure 256-bit random values. Production cookies use `__Host-`, `HttpOnly`, `SameSite=Strict`, and `Secure` flags.
