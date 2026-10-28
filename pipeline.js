@@ -66,25 +66,29 @@
     }
 
     function estimateCredits({
-        inputType, model, quad, autoRig, textureQuality = 'standard',
+        inputType, model, quad, autoRig, textureQuality = 'standard', texture = true,
         segment = false, geometryQuality = 'standard', smartLowPoly = false, generateParts = false
     }) {
         if (!(model in MODEL_COST)) throw new Error('Unsupported model version');
         const image = inputType === 'side' ? 5 : 0;
         const multiview = ['side', 'tpose'].includes(inputType) ? 10 : 0;
-        const texture = textureQuality === 'detailed' ? 10 : (textureQuality === 'extreme' ? 20 : 0);
+        const hasTexture = texture !== false && !generateParts;
+        const baseModelCost = MODEL_COST[model];
+        const baseModel = hasTexture ? baseModelCost : Math.max(0, baseModelCost - 10);
+        const textureAddon = hasTexture
+            ? (textureQuality === 'detailed' ? 10 : (textureQuality === 'extreme' ? 20 : 0))
+            : 0;
         const geometry = (geometryQuality === 'detailed' && ['v3.1-20260211', 'v3.0-20250812'].includes(model)) ? 20 : 0;
         const smartLowPolyAddon = smartLowPoly ? 10 : 0;
         const partsAddon = generateParts ? 20 : 0;
         const segmentation = segment ? 40 : 0;
         const conversion = quad ? 10 : 5;
         const rig = (autoRig && inputType !== 'object') ? 25 : 0;
-        const baseModel = MODEL_COST[model];
         return {
-            image, multiview, model: baseModel, texture, geometry,
+            image, multiview, model: baseModel, texture: textureAddon, geometry,
             smartLowPolyAddon, partsAddon,
             segmentation, conversion, rig,
-            total: image + multiview + baseModel + texture + geometry +
+            total: image + multiview + baseModel + textureAddon + geometry +
                 smartLowPolyAddon + partsAddon + segmentation + conversion + rig
         };
     }
@@ -108,7 +112,9 @@
         if (settings.quad && settings.model === 'v2.5-20250123') throw new Error('H2.5 does not support quad topology');
         if (settings.forceSymmetry && !settings.quad) throw new Error('Force symmetry requires quad topology');
         if (settings.bake && settings.format === 'stl') throw new Error('STL cannot contain baked textures');
-        if (settings.autoRig && !['fbx', 'gltf'].includes(settings.format)) throw new Error('Auto-rigging requires FBX or GLTF output');
+        if (settings.autoRig && settings.inputType !== 'object' && !['fbx', 'gltf'].includes(settings.format)) {
+            throw new Error('Auto-rigging requires FBX or GLTF output');
+        }
         if (settings.rigSpec && !RIG_SPECS.includes(settings.rigSpec)) throw new Error('Unsupported rig spec');
         if (settings.textureQuality && !TEXTURE_QUALITIES.includes(settings.textureQuality)) throw new Error('Unsupported texture quality');
         if (settings.geometryQuality && !GEOMETRY_QUALITIES.includes(settings.geometryQuality)) throw new Error('Unsupported geometry quality');
@@ -138,8 +144,12 @@
     function buildModelPayload(inputOrInputs, settings, isMultiview = false) {
         const payload = isMultiview ? { inputs: inputOrInputs } : { input: inputOrInputs };
         payload.model = settings.model;
+        const hasTexture = settings.texture !== false && !settings.generateParts;
         if (settings.generateParts) {
             payload.generate_parts = true;
+            payload.texture = false;
+            payload.pbr = false;
+        } else if (!hasTexture) {
             payload.texture = false;
             payload.pbr = false;
         } else {
@@ -152,6 +162,7 @@
             }
             if (settings.textureAlignment) payload.texture_alignment = settings.textureAlignment;
             if (settings.orientation) payload.orientation = settings.orientation;
+            if (settings.textureSeed !== undefined && settings.textureSeed !== '') payload.texture_seed = Number(settings.textureSeed);
         }
         if (settings.quad && settings.model !== 'P1-20260311' && settings.model !== 'v2.5-20250123') {
             payload.quad = true;
@@ -163,7 +174,6 @@
         if (settings.enableImageAutofix) payload.enable_image_autofix = true;
         if (settings.faceLimit !== '') payload.face_limit = Number(settings.faceLimit);
         if (settings.modelSeed !== undefined && settings.modelSeed !== '') payload.model_seed = Number(settings.modelSeed);
-        if (settings.textureSeed !== undefined && settings.textureSeed !== '') payload.texture_seed = Number(settings.textureSeed);
         if (settings.autoSize) payload.auto_size = true;
         if (settings.compress) payload.compress = settings.compress;
         if (settings.customParams && typeof settings.customParams === 'object') {
@@ -187,11 +197,13 @@
     }
 
     function convertPayload(taskId, settings) {
-        const payload = { input: taskId, format: settings.format.toUpperCase(), bake: settings.bake };
-        if (settings.bake && settings.textureSize) {
+        const canBake = settings.texture !== false && !settings.generateParts && settings.format !== 'stl';
+        const bake = canBake ? (settings.bake !== false) : false;
+        const payload = { input: taskId, format: settings.format.toUpperCase(), bake };
+        if (bake && settings.textureSize) {
             payload.texture_size = Number(settings.textureSize);
         }
-        if (settings.quad) {
+        if (settings.quad && settings.format === 'fbx') {
             payload.quad = true;
             if (settings.forceSymmetry) payload.force_symmetry = true;
             if (settings.faceLimit !== '') payload.face_limit = Number(settings.faceLimit);
@@ -226,7 +238,8 @@
         const known = {
             model: ['model', 'model_version', 'modelVersion'],
             inputType: ['inputType', 'input_type', 'type', 'starting_point', 'startingPoint'],
-            format: ['format', 'output_format', 'outputFormat'],
+            format: ['format', 'output_format', 'outputFormat', 'out_format'],
+            texture: ['texture', 'pbr', 'enableTexture', 'enable_texture'],
             faceLimit: ['faceLimit', 'face_limit'],
             quad: ['quad'],
             forceSymmetry: ['forceSymmetry', 'force_symmetry'],
@@ -256,6 +269,11 @@
             }
         }
 
+        if (typeof result.format === 'string') {
+            result.format = result.format.toLowerCase();
+            if (result.format === 'glb') result.format = 'gltf';
+        }
+
         const customParams = {};
         for (const [key, value] of Object.entries(parsed)) {
             if (!handledKeys.has(key) && !['input', 'inputs', 'files', 'prompt'].includes(key)) {
@@ -269,19 +287,22 @@
     }
 
     function exportJsonConfig(settings) {
+        const hasTexture = settings.texture !== false && !settings.generateParts;
+        const canBake = hasTexture && settings.format !== 'stl';
         const out = {
             model: settings.model || 'v3.1-20260211',
             inputType: settings.inputType || 'side',
             format: settings.format || 'fbx',
+            texture: hasTexture,
             faceLimit: settings.faceLimit !== undefined && settings.faceLimit !== '' ? Number(settings.faceLimit) : null,
             geometryQuality: settings.geometryQuality || 'standard',
             textureQuality: settings.textureQuality || 'standard',
             textureSize: settings.textureSize ? Number(settings.textureSize) : 2048,
-            bake: settings.bake !== false,
+            bake: canBake ? (settings.bake !== false) : false,
             quad: !!settings.quad,
             forceSymmetry: !!settings.forceSymmetry,
-            delight: settings.delight !== false,
-            autoRig: !!settings.autoRig,
+            delight: hasTexture && settings.delight !== false,
+            autoRig: !!settings.autoRig && settings.inputType !== 'object',
             rigSpec: settings.rigSpec || 'mixamo',
             segment: !!settings.segment
         };

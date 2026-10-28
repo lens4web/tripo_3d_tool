@@ -33,11 +33,12 @@ class Element {
 function browser(mode) {
     const ids = ['apiKey', 'pipelineCard', 'apiKeyCard', 'runBtn', 'logs', 'applyKeyBtn',
         'changeKeyBtn', 'inputType', 'paramModelVersion', 'paramFaceLimit', 'paramFormat',
-        'paramBake', 'paramQuad', 'paramForceSymmetry', 'paramSegment', 'paramRig',
+        'paramTexture', 'paramBake', 'paramQuad', 'paramForceSymmetry', 'paramSegment', 'paramRig',
         'paramTextureQuality', 'paramTextureSize', 'paramGeometryQuality', 'geometryQualityField',
         'paramDelight', 'paramAutofix', 'paramSmartLowPoly', 'paramGenerateParts',
         'paramRigSpec', 'rigSpecField', 'rigOption', 'rigNote',
         'singleInput', 'viewInputs', 'faceHint', 'costEstimate',
+        'uploadHeading', 'chooseImageLabel',
         'imageFile', 'frontFile', 'leftFile', 'backFile', 'rightFile', 'intermediateResults',
         'intermediateSection', 'resultContainer', 'pipelineStatus', 'connectionStatus', 'keyError',
         'sourcePreview', 'sourceFileInfo', 'creditTotal', 'validationError', 'inputDescription', 'keyStateDot',
@@ -49,6 +50,7 @@ function browser(mode) {
     elements.paramModelVersion.value = 'v3.1-20260211';
     elements.paramFaceLimit.value = '8000';
     elements.paramFormat.value = 'fbx';
+    elements.paramTexture.checked = true;
     elements.paramBake.checked = true;
     elements.paramDelight.checked = true;
     elements.paramTextureQuality.value = 'standard';
@@ -361,5 +363,62 @@ test('JSON configuration modal opens, copies, and applies settings to form', asy
     assert.equal(elements.paramRig.checked, true);
     assert.equal(elements.paramRigSpec.value, 'vrm');
     assert.equal(elements.jsonSuccess.hidden, false);
+});
+
+test('disabling texture turns off bake, delight, texture size and discounts cost', async () => {
+    const { elements, calls } = browser('object');
+    assert.match(elements.creditTotal.textContent, /35 credits/);
+    assert.equal(elements.paramTexture.checked, true);
+    assert.equal(elements.paramBake.checked, true);
+    assert.equal(elements.paramBake.disabled, false);
+    assert.equal(elements.paramDelight.checked, true);
+    assert.equal(elements.paramDelight.disabled, false);
+
+    elements.paramTexture.checked = false;
+    elements.paramTexture.listeners.change();
+
+    assert.equal(elements.paramBake.checked, false);
+    assert.equal(elements.paramBake.disabled, true);
+    assert.equal(elements.paramDelight.checked, false);
+    assert.equal(elements.paramDelight.disabled, true);
+    assert.equal(elements.paramTextureQuality.disabled, true);
+    assert.equal(elements.paramTextureSize.disabled, true);
+    // 35 - 10 discount = 25 credits
+    assert.match(elements.creditTotal.textContent, /25 credits/);
+
+    await elements.runBtn.listeners.click();
+    const imageToModelCall = calls.find(call => call.url.endsWith('image-to-model'));
+    assert.ok(imageToModelCall);
+    assert.equal(imageToModelCall.payload.texture, false);
+    assert.equal(imageToModelCall.payload.pbr, false);
+    assert.equal(imageToModelCall.payload.texture_quality, undefined);
+
+    const convertCall = calls.find(call => call.url.endsWith('models/convert'));
+    assert.ok(convertCall);
+    assert.equal(convertCall.payload.bake, false);
+});
+
+test('object mode dynamically updates headings, upload prompt and generate button for universal props', () => {
+    const { elements } = browser('object');
+    assert.equal(elements.uploadHeading.textContent, I.translate('en', 'addObject'));
+    assert.equal(elements.chooseImageLabel.textContent, I.translate('en', 'chooseObjectImage'));
+    assert.equal(elements.runBtn.textContent, I.translate('en', 'generateModel'));
+
+    elements.inputType.value = 'side';
+    elements.inputType.listeners.change();
+    assert.equal(elements.uploadHeading.textContent, I.translate('en', 'addCharacter'));
+    assert.equal(elements.chooseImageLabel.textContent, I.translate('en', 'chooseImage'));
+    assert.equal(elements.runBtn.textContent, I.translate('en', 'generate'));
+});
+
+test('enabling parts generation disables texture and quad options', () => {
+    const { elements } = browser('object');
+    elements.paramGenerateParts.checked = true;
+    elements.paramGenerateParts.listeners.change();
+
+    assert.equal(elements.paramTexture.checked, false);
+    assert.equal(elements.paramTexture.disabled, true);
+    assert.equal(elements.paramQuad.checked, false);
+    assert.equal(elements.paramQuad.disabled, true);
 });
 

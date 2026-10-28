@@ -123,6 +123,7 @@ function settings() {
         model: el('paramModelVersion').value,
         faceLimit: el('paramFaceLimit').value.trim(),
         format: el('paramFormat').value,
+        texture: el('paramTexture') ? el('paramTexture').checked : true,
         bake: el('paramBake').checked,
         textureSize: el('paramTextureSize') ? Number(el('paramTextureSize').value) : 2048,
         textureQuality: el('paramTextureQuality') ? el('paramTextureQuality').value : 'standard',
@@ -148,6 +149,14 @@ function syncOptions() {
     el('inputDescription').textContent = t(descKey);
     el('singleInput').hidden = isMultiview;
     el('viewInputs').hidden = !isMultiview;
+
+    const uploadHeading = el('uploadHeading');
+    if (uploadHeading) translatedNode(uploadHeading, isObject ? 'addObject' : 'addCharacter');
+    const chooseImageLabel = el('chooseImageLabel');
+    if (chooseImageLabel) translatedNode(chooseImageLabel, isObject ? 'chooseObjectImage' : 'chooseImage');
+    const runBtn = el('runBtn');
+    if (runBtn && !running) translatedNode(runBtn, isObject ? 'generateModel' : 'generate');
+
     const modelHints = {
         'v3.1-20260211': 'modelHintH31',
         'P2-20260801': 'modelHintP2',
@@ -161,10 +170,36 @@ function syncOptions() {
     if (modelHintNode && hintKey) {
         translatedNode(modelHintNode, hintKey);
     }
-    const quad = el('paramQuad');
+
+    const format = el('paramFormat').value;
     const isP1 = model === 'P1-20260311';
     const isH25 = model === 'v2.5-20250123';
-    const canQuad = el('paramFormat').value === 'fbx' && !isP1 && !isH25;
+    const isStl = format === 'stl';
+
+    const generateParts = el('paramGenerateParts');
+    const smartLowPoly = el('paramSmartLowPoly')?.checked;
+    const quad = el('paramQuad');
+
+    if (generateParts) {
+        if (generateParts.checked && (quad.checked || smartLowPoly)) {
+            generateParts.checked = false;
+        }
+        generateParts.disabled = quad.checked || smartLowPoly;
+    }
+
+    const hasParts = !!generateParts?.checked;
+    const textureToggle = el('paramTexture');
+    if (textureToggle) {
+        if (hasParts) {
+            textureToggle.checked = false;
+            textureToggle.disabled = true;
+        } else {
+            textureToggle.disabled = false;
+        }
+    }
+    const hasTexture = textureToggle ? (textureToggle.checked && !hasParts) : !hasParts;
+
+    const canQuad = format === 'fbx' && !isP1 && !isH25 && !hasParts;
     if (!canQuad) quad.checked = false;
     quad.disabled = !canQuad;
     const forceSymmetry = el('paramForceSymmetry');
@@ -172,6 +207,7 @@ function syncOptions() {
         if (!quad.checked) forceSymmetry.checked = false;
         forceSymmetry.disabled = !quad.checked;
     }
+
     const geomQuality = el('paramGeometryQuality');
     const geomQualityField = el('geometryQualityField');
     const supportsGeomQuality = ['v3.1-20260211', 'v3.0-20250812'].includes(model);
@@ -180,34 +216,41 @@ function syncOptions() {
         if (!supportsGeomQuality) geomQuality.value = 'standard';
     }
     if (geomQualityField) geomQualityField.hidden = !supportsGeomQuality;
+
+    const textureQuality = el('paramTextureQuality');
+    if (textureQuality) {
+        textureQuality.disabled = !hasTexture;
+    }
+
+    const delight = el('paramDelight');
+    if (delight) {
+        const canDelight = hasTexture && !isH25;
+        if (!canDelight) delight.checked = false;
+        delight.disabled = !canDelight;
+    }
+
     const bake = el('paramBake');
-    if (el('paramFormat').value === 'stl') bake.checked = false;
-    bake.disabled = el('paramFormat').value === 'stl';
+    const canBake = hasTexture && !isStl;
+    if (!canBake) bake.checked = false;
+    bake.disabled = !canBake;
+
     const textureSize = el('paramTextureSize');
     if (textureSize) {
-        textureSize.disabled = !bake.checked || el('paramFormat').value === 'stl';
+        textureSize.disabled = !bake.checked || !canBake;
     }
+
     const rig = el('paramRig');
     const rigOption = el('rigOption');
     const rigNote = el('rigNote');
     const rigSpecField = el('rigSpecField');
     if (rig) {
-        const canRig = ['fbx', 'gltf'].includes(el('paramFormat').value) && !isObject;
+        const canRig = ['fbx', 'gltf'].includes(format) && !isObject;
         if (!canRig) rig.checked = false;
         rig.disabled = !canRig;
     }
     if (rigOption) rigOption.hidden = isObject;
     if (rigNote) rigNote.hidden = isObject;
     if (rigSpecField) rigSpecField.hidden = !rig?.checked || isObject;
-
-    const smartLowPoly = el('paramSmartLowPoly')?.checked;
-    const generateParts = el('paramGenerateParts');
-    if (generateParts) {
-        if (generateParts.checked && (quad.checked || smartLowPoly)) {
-            generateParts.checked = false;
-        }
-        generateParts.disabled = quad.checked || smartLowPoly;
-    }
 
     const [min, max] = P.faceRange(model, quad.checked, geomQuality?.value, smartLowPoly);
     el('paramFaceLimit').min = min;
@@ -231,7 +274,7 @@ function syncOptions() {
         rig: cost.rig
     });
 }
-['inputType', 'paramModelVersion', 'paramFormat', 'paramQuad', 'paramForceSymmetry', 'paramRig', 'paramRigSpec', 'paramBake', 'paramDelight', 'paramAutofix', 'paramSmartLowPoly', 'paramGenerateParts', 'paramTextureQuality', 'paramTextureSize', 'paramGeometryQuality', 'paramSegment'].forEach(id => {
+['inputType', 'paramModelVersion', 'paramFormat', 'paramTexture', 'paramQuad', 'paramForceSymmetry', 'paramRig', 'paramRigSpec', 'paramBake', 'paramDelight', 'paramAutofix', 'paramSmartLowPoly', 'paramGenerateParts', 'paramTextureQuality', 'paramTextureSize', 'paramGeometryQuality', 'paramSegment'].forEach(id => {
     const node = el(id);
     if (node) node.addEventListener('change', syncOptions);
 });
@@ -302,6 +345,7 @@ if (applyJsonBtn) {
             if (cfg.geometryQuality && el('paramGeometryQuality')) el('paramGeometryQuality').value = cfg.geometryQuality;
             if (cfg.quad !== undefined && el('paramQuad')) el('paramQuad').checked = !!cfg.quad;
             if (cfg.forceSymmetry !== undefined && el('paramForceSymmetry')) el('paramForceSymmetry').checked = !!cfg.forceSymmetry;
+            if (cfg.texture !== undefined && el('paramTexture')) el('paramTexture').checked = !!cfg.texture;
             if (cfg.delight !== undefined && el('paramDelight')) el('paramDelight').checked = !!cfg.delight;
             if (cfg.enableImageAutofix !== undefined && el('paramAutofix')) el('paramAutofix').checked = !!cfg.enableImageAutofix;
             if (cfg.smartLowPoly !== undefined && el('paramSmartLowPoly')) el('paramSmartLowPoly').checked = !!cfg.smartLowPoly;
@@ -589,7 +633,7 @@ runBtn.addEventListener('click', async () => {
         pipelineCard.querySelectorAll('input, select').forEach(control => control.disabled = false);
         el('changeKeyBtn').disabled = false;
         runBtn.disabled = false;
-        translatedNode(runBtn, 'generate');
+        translatedNode(runBtn, el('inputType').value === 'object' ? 'generateModel' : 'generate');
         syncOptions();
     }
 });

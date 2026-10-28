@@ -85,6 +85,8 @@ test('task URLs and cost estimates use current V3 fields and published tiers', (
     assert.throws(() => P.resultUrl({ model: { url: 'https://cdn.tripo3d.ai/model.glb' } }, 'model_url'), /no model_url/);
     assert.equal(P.estimateCredits(base).total, 50);
     assert.equal(P.estimateCredits({ ...base, inputType: 'object' }).total, 35);
+    assert.equal(P.estimateCredits({ ...base, inputType: 'object', texture: false }).total, 25);
+    assert.equal(P.estimateCredits({ ...base, texture: false }).total, 40);
     assert.equal(P.estimateCredits({ ...base, inputType: 'object', autoRig: true }).total, 35);
     assert.equal(P.estimateCredits({ ...base, textureQuality: 'detailed' }).total, 60);
     assert.equal(P.estimateCredits({ ...base, segment: true }).total, 90);
@@ -96,11 +98,26 @@ test('task URLs and cost estimates use current V3 fields and published tiers', (
     assert.equal(P.MODEL_INFO['v3.1-20260211'].quad, true);
 });
 
+test('texture toggles and clay geometry-only generation are supported', () => {
+    const untextured = P.imageToModelPayload('input_tok', { ...base, texture: false });
+    assert.equal(untextured.texture, false);
+    assert.equal(untextured.pbr, false);
+    assert.equal(untextured.texture_quality, undefined);
+    assert.equal(untextured.texture_version, undefined);
+    assert.equal(untextured.delight, undefined);
+
+    const convertUntextured = P.convertPayload('model_task', { ...base, texture: false, bake: true, textureSize: 2048 });
+    assert.equal(convertUntextured.bake, false);
+    assert.equal(convertUntextured.texture_size, undefined);
+});
+
 test('JSON configuration parses snake_case and camelCase and exports cleanly', () => {
     const jsonStr = JSON.stringify({
         model: 'v3.1-20260211',
         geometry_quality: 'detailed',
         texture_quality: 'detailed',
+        texture: false,
+        out_format: 'glb',
         face_limit: 1500000,
         quad: true,
         delight: true,
@@ -111,6 +128,8 @@ test('JSON configuration parses snake_case and camelCase and exports cleanly', (
     assert.equal(parsed.model, 'v3.1-20260211');
     assert.equal(parsed.geometryQuality, 'detailed');
     assert.equal(parsed.textureQuality, 'detailed');
+    assert.equal(parsed.texture, false);
+    assert.equal(parsed.format, 'gltf');
     assert.equal(parsed.faceLimit, 1500000);
     assert.equal(parsed.quad, true);
     assert.equal(parsed.delight, true);
@@ -120,6 +139,8 @@ test('JSON configuration parses snake_case and camelCase and exports cleanly', (
     const exported = JSON.parse(P.exportJsonConfig(parsed));
     assert.equal(exported.model, 'v3.1-20260211');
     assert.equal(exported.geometryQuality, 'detailed');
+    assert.equal(exported.texture, false);
+    assert.equal(exported.bake, false);
     assert.equal(exported.custom_seed, 42);
 });
 

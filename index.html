@@ -112,6 +112,7 @@
                             </select><span class="helper" data-i18n="textureSizeHint">Resolution for baked texture maps.</span></div>
                         </div>
                         <div class="toggle-grid">
+                            <label class="toggle-option"><input type="checkbox" id="paramTexture" checked><span><strong data-i18n="textureToggle">Texture &amp; PBR</strong><small data-i18n="textureToggleHint">Generate textures and PBR materials. Disable for clay / geometry-only (faster, saves credits)</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramBake" checked><span><strong data-i18n="bake">Bake textures</strong><small data-i18n="bakeHint">Combine materials into base textures</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramDelight" checked><span><strong data-i18n="delight">Delight textures</strong><small data-i18n="delightHint">Removes baked lighting from input images</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramQuad"><span><strong data-i18n="quad">Quad topology</strong><small data-i18n="quadHint">Available for FBX export</small></span></label>
@@ -136,9 +137,9 @@
                         </div>
                         <p class="info-note" id="rigNote" data-i18n="rigNote">FBX and GLTF support humanoid skeletal auto-rigging with Rig v3.0 (Mixamo convention).</p>
                         <div class="upload-section">
-                            <div class="section-heading compact"><span class="section-number">02</span><div><h2 data-i18n="addCharacter">Add your character</h2><p id="inputDescription" data-i18n="simpleBackground">Use a clear image on a simple background.</p></div></div>
+                            <div class="section-heading compact"><span class="section-number">02</span><div><h2 id="uploadHeading" data-i18n="addCharacter">Add your character</h2><p id="inputDescription" data-i18n="simpleBackground">Use a clear image on a simple background.</p></div></div>
                             <div id="singleInput">
-                                <label class="upload-box" for="imageFile"><span class="upload-symbol" aria-hidden="true">↑</span><strong data-i18n="chooseImage">Choose a character image</strong><span data-i18n="imageSize">JPEG or PNG · up to 20 MB</span><img id="sourcePreview" class="source-preview" alt="Selected character" data-i18n-alt="selectedCharacter" hidden></label>
+                                <label class="upload-box" for="imageFile"><span class="upload-symbol" aria-hidden="true">↑</span><strong id="chooseImageLabel" data-i18n="chooseImage">Choose a character image</strong><span data-i18n="imageSize">JPEG or PNG · up to 20 MB</span><img id="sourcePreview" class="source-preview" alt="Selected character" data-i18n-alt="selectedCharacter" hidden></label>
                                 <input type="file" id="imageFile" accept="image/jpeg,image/png">
                                 <p id="sourceFileInfo" class="helper file-info" data-i18n="noImage">No image selected</p>
                             </div>
