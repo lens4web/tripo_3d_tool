@@ -94,7 +94,7 @@ test('API rejects absent keys, unapproved routes, cross-site requests and oversi
     const origin = await serve(t, createApp());
     assert.equal((await fetch(`${origin}/api/v3/tasks/id`)).status, 401);
     const key = await connect(origin);
-    assert.equal((await fetch(`${origin}/api/v3/account/balance`, { headers: key })).status, 404);
+    assert.equal((await fetch(`${origin}/api/v3/unapproved/route`, { headers: key })).status, 404);
     assert.equal((await fetch(`${origin}/api/v3/tasks/id`, { headers: { ...key, Origin: 'https://evil.test' } })).status, 403);
     assert.equal((await fetch(`${origin}/api/download?url=bad`, { headers: { ...key, 'Sec-Fetch-Site': 'cross-site' } })).status, 403);
     assert.equal((await fetch(`${origin}/api/v3/models/convert`, { method: 'POST', headers: key, body: 'not-json' })).status, 415);

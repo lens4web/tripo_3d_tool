@@ -73,7 +73,7 @@
                         <p class="form-error" id="keyError" role="alert" hidden></p>
                     </section>
                     <section class="card configuration-card" id="pipelineCard" hidden aria-labelledby="settingsHeading">
-                        <div class="section-heading"><span class="section-number">01</span><div><h2 id="settingsHeading" data-i18n="setup">Set up your generation</h2><p data-i18n="setupHint">Choose the starting point and the final output.</p></div><div class="key-controls"><span class="api-state-dot connected" aria-hidden="true"></span><button id="jsonConfigBtn" class="button-quiet" type="button" data-i18n="jsonConfig">JSON config</button><button id="changeKeyBtn" class="button-quiet" type="button" data-i18n="disconnect">Disconnect key</button></div></div>
+                        <div class="section-heading"><span class="section-number">01</span><div><h2 id="settingsHeading" data-i18n="setup">Set up your generation</h2><p data-i18n="setupHint">Choose the starting point and the final output.</p></div><div class="key-controls"><span class="api-state-dot connected" aria-hidden="true"></span><span id="accountBalanceBadge" class="balance-badge" hidden></span><button id="jsonConfigBtn" class="button-quiet" type="button" data-i18n="jsonConfig">JSON config</button><button id="changeKeyBtn" class="button-quiet" type="button" data-i18n="disconnect">Disconnect key</button></div></div>
                         <div class="grid settings-grid">
                             <div class="field"><label for="inputType" data-i18n="startingPoint">Starting point</label><select id="inputType">
                                 <option value="object" data-i18n="singleObject">Single object / prop → direct 3D</option>
@@ -98,6 +98,8 @@
                                 <option value="gltf">GLTF · Web</option>
                                 <option value="obj" data-i18n="staticModel" data-i18n-prefix="OBJ · ">OBJ · Static model</option>
                                 <option value="stl" data-i18n="geometryOnly" data-i18n-prefix="STL · ">STL · Geometry only</option>
+                                <option value="usdz" data-i18n="formatUsdz" data-i18n-prefix="USDZ · ">USDZ · Apple AR / iOS</option>
+                                <option value="3mf" data-i18n="format3mf" data-i18n-prefix="3MF · ">3MF · 3D printing</option>
                             </select><span class="helper" data-i18n="formatHint">Choose a format for your next tool.</span></div>
                             <div class="field"><label for="paramTextureQuality" data-i18n="textureQuality">Texture quality</label><select id="paramTextureQuality">
                                 <option value="fast" data-i18n="textureQualityFast">Fast (speed tier)</option>
@@ -114,6 +116,8 @@
                         <div class="toggle-grid">
                             <label class="toggle-option"><input type="checkbox" id="paramTexture" checked><span><strong data-i18n="textureToggle">Texture &amp; PBR</strong><small data-i18n="textureToggleHint">Generate textures and PBR materials. Disable for clay / geometry-only (faster, saves credits)</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramBake" checked><span><strong data-i18n="bake">Bake textures</strong><small data-i18n="bakeHint">Combine materials into base textures</small></span></label>
+                            <label class="toggle-option" id="packagingOption"><input type="checkbox" id="paramTexturePackaging"><span><strong data-i18n="texturePackaging">FBX texture bundle</strong><small data-i18n="texturePackagingHint">Package FBX and separate texture images into a .zip archive</small></span></label>
+                            <label class="toggle-option"><input type="checkbox" id="paramPivot"><span><strong data-i18n="pivotToCenterBottom">Center pivot at bottom</strong><small data-i18n="pivotToCenterBottomHint">Place origin at bottom center of model bounding box (ideal for props &amp; objects)</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramDelight" checked><span><strong data-i18n="delight">Delight textures</strong><small data-i18n="delightHint">Removes baked lighting from input images</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramQuad"><span><strong data-i18n="quad">Quad topology</strong><small data-i18n="quadHint">Available for FBX export</small></span></label>
                             <label class="toggle-option"><input type="checkbox" id="paramForceSymmetry"><span><strong data-i18n="forceSymmetry">Force symmetry</strong><small data-i18n="forceSymmetryHint">Enforce bilateral symmetry on quad mesh</small></span></label>

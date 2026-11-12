@@ -33,6 +33,28 @@ function showKeyState() {
     translatedNode(el('connectionStatus'), sessionApplied ? 'keyApplied' : 'keyNotApplied');
     el('connectionStatus').className = `connection-pill ${sessionApplied ? 'connected' : 'disconnected'}`;
     el('keyStateDot').className = `api-state-dot${sessionApplied ? ' connected' : ''}`;
+    return fetchBalance();
+}
+async function fetchBalance() {
+    const badge = el('accountBalanceBadge');
+    if (!badge) return;
+    if (!sessionApplied) {
+        badge.hidden = true;
+        badge.textContent = '';
+        return;
+    }
+    try {
+        const response = await fetch('/api/v3/account/balance', { signal: AbortSignal.timeout(8000) });
+        if (response.ok) {
+            const json = await response.json();
+            const balance = json.data?.balance;
+            if (typeof balance === 'number') {
+                const usd = (balance * 0.01).toFixed(2);
+                badge.textContent = t('accountBalance', { credits: balance.toLocaleString(document.documentElement.lang), usd });
+                badge.hidden = false;
+            }
+        }
+    } catch {}
 }
 showKeyState();
 async function sessionRequest(method, body) {
@@ -42,10 +64,10 @@ async function sessionRequest(method, body) {
     });
     return readApiResponse(response);
 }
-const sessionReady = sessionRequest('GET').then(response => {
+const sessionReady = sessionRequest('GET').then(async response => {
     sessionApplied = response.data.connected === true;
-    showKeyState();
-}).catch(() => { sessionApplied = false; showKeyState(); });
+    await showKeyState();
+}).catch(async () => { sessionApplied = false; await showKeyState(); });
 el('applyKeyBtn').addEventListener('click', async () => {
     await sessionReady;
     const value = apiKeyInput.value.trim();
@@ -125,6 +147,8 @@ function settings() {
         format: el('paramFormat').value,
         texture: el('paramTexture') ? el('paramTexture').checked : true,
         bake: el('paramBake').checked,
+        texturePackaging: el('paramTexturePackaging')?.checked ? 'zip' : 'embedded',
+        pivotToCenterBottom: el('paramPivot') ? el('paramPivot').checked : false,
         textureSize: el('paramTextureSize') ? Number(el('paramTextureSize').value) : 2048,
         textureQuality: el('paramTextureQuality') ? el('paramTextureQuality').value : 'standard',
         geometryQuality: el('paramGeometryQuality') ? el('paramGeometryQuality').value : 'standard',
@@ -174,10 +198,16 @@ function syncOptions() {
     const format = el('paramFormat').value;
     const isP1 = model === 'P1-20260311';
     const isH25 = model === 'v2.5-20250123';
-    const isStl = format === 'stl';
+    const isUntexturedFormat = ['stl', '3mf'].includes(format);
 
     const generateParts = el('paramGenerateParts');
-    const smartLowPoly = el('paramSmartLowPoly')?.checked;
+    const supportsSmartLowPoly = ['v3.1-20260211', 'v3.0-20250812'].includes(model);
+    const smartLowPolyNode = el('paramSmartLowPoly');
+    if (smartLowPolyNode) {
+        if (!supportsSmartLowPoly) smartLowPolyNode.checked = false;
+        smartLowPolyNode.disabled = !supportsSmartLowPoly;
+    }
+    const smartLowPoly = smartLowPolyNode?.checked;
     const quad = el('paramQuad');
 
     if (generateParts) {
@@ -208,6 +238,15 @@ function syncOptions() {
         forceSymmetry.disabled = !quad.checked;
     }
 
+    const packagingOption = el('packagingOption');
+    const texturePackaging = el('paramTexturePackaging');
+    const canPackage = format === 'fbx' && hasTexture;
+    if (packagingOption) packagingOption.hidden = format !== 'fbx';
+    if (texturePackaging) {
+        if (!canPackage) texturePackaging.checked = false;
+        texturePackaging.disabled = !canPackage;
+    }
+
     const geomQuality = el('paramGeometryQuality');
     const geomQualityField = el('geometryQualityField');
     const supportsGeomQuality = ['v3.1-20260211', 'v3.0-20250812'].includes(model);
@@ -230,7 +269,7 @@ function syncOptions() {
     }
 
     const bake = el('paramBake');
-    const canBake = hasTexture && !isStl;
+    const canBake = hasTexture && !isUntexturedFormat;
     if (!canBake) bake.checked = false;
     bake.disabled = !canBake;
 
@@ -274,7 +313,7 @@ function syncOptions() {
         rig: cost.rig
     });
 }
-['inputType', 'paramModelVersion', 'paramFormat', 'paramTexture', 'paramQuad', 'paramForceSymmetry', 'paramRig', 'paramRigSpec', 'paramBake', 'paramDelight', 'paramAutofix', 'paramSmartLowPoly', 'paramGenerateParts', 'paramTextureQuality', 'paramTextureSize', 'paramGeometryQuality', 'paramSegment'].forEach(id => {
+['inputType', 'paramModelVersion', 'paramFormat', 'paramTexture', 'paramQuad', 'paramForceSymmetry', 'paramRig', 'paramRigSpec', 'paramBake', 'paramDelight', 'paramAutofix', 'paramSmartLowPoly', 'paramGenerateParts', 'paramTextureQuality', 'paramTextureSize', 'paramGeometryQuality', 'paramSegment', 'paramTexturePackaging', 'paramPivot'].forEach(id => {
     const node = el(id);
     if (node) node.addEventListener('change', syncOptions);
 });
@@ -351,6 +390,8 @@ if (applyJsonBtn) {
             if (cfg.smartLowPoly !== undefined && el('paramSmartLowPoly')) el('paramSmartLowPoly').checked = !!cfg.smartLowPoly;
             if (cfg.generateParts !== undefined && el('paramGenerateParts')) el('paramGenerateParts').checked = !!cfg.generateParts;
             if (cfg.segment !== undefined && el('paramSegment')) el('paramSegment').checked = !!cfg.segment;
+            if (cfg.texturePackaging !== undefined && el('paramTexturePackaging')) el('paramTexturePackaging').checked = cfg.texturePackaging === 'zip';
+            if (cfg.pivotToCenterBottom !== undefined && el('paramPivot')) el('paramPivot').checked = !!cfg.pivotToCenterBottom;
             if (cfg.autoRig !== undefined && el('paramRig')) el('paramRig').checked = !!cfg.autoRig;
             if (cfg.rigSpec && el('paramRigSpec')) el('paramRigSpec').value = cfg.rigSpec;
             customTripoParams = cfg.customParams || {};
@@ -621,7 +662,9 @@ runBtn.addEventListener('click', async () => {
         const convertId = taskId(await postApi('/api/v3/models/convert', P.convertPayload(modelTaskId, selected)));
         const converted = await pollTask(convertId);
         const finalUrl = P.resultUrl(converted.output, 'model_url');
-        showModel(finalUrl, `final_model.${selected.format}`, 'downloadModel', { format: selected.format.toUpperCase() });
+        const isZipPackage = (selected.format === 'fbx' && selected.texturePackaging === 'zip') || finalUrl.toLowerCase().includes('.zip');
+        const outName = isZipPackage ? (selected.format === 'fbx' ? 'final_model_fbx.zip' : 'final_model.zip') : `final_model.${selected.format}`;
+        showModel(finalUrl, outName, 'downloadModel', { format: isZipPackage ? `${selected.format.toUpperCase()} (ZIP)` : selected.format.toUpperCase() });
         logCredits(converted, 'conversion');
         log('pipelineComplete', {}, 'success');
         setStatus('complete', 'complete');

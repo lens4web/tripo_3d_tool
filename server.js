@@ -98,7 +98,7 @@ function createApp(options = {}) {
     });
     const generationLimit = rateLimit({ ...limitOptions, windowMs: 300000, limit: 25 });
     app.use('/api/v3', (req, res, next) => {
-        const isQuery = req.method === 'GET' && /^\/tasks\/[a-zA-Z0-9_-]{1,100}$/.test(req.path);
+        const isQuery = req.method === 'GET' && (/^\/tasks\/[a-zA-Z0-9_-]{1,100}$/.test(req.path) || req.path === '/account/balance');
         const isCreate = req.method === 'POST' && [
             '/files', '/generation/image-to-image', '/generation/image-to-multiview',
             '/generation/image-to-model', '/generation/multiview-to-model',

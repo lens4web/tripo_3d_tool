@@ -44,7 +44,8 @@ function browser(mode) {
         'sourcePreview', 'sourceFileInfo', 'creditTotal', 'validationError', 'inputDescription', 'keyStateDot',
         'modelInfoBtn', 'modelModal', 'closeModalBtn', 'closeModalFooterBtn', 'modelSummaryHint',
         'jsonModal', 'jsonConfigBtn', 'closeJsonModalBtn', 'applyJsonBtn', 'copyJsonBtn',
-        'jsonConfigText', 'jsonError', 'jsonSuccess'];
+        'jsonConfigText', 'jsonError', 'jsonSuccess',
+        'paramTexturePackaging', 'packagingOption', 'paramPivot', 'accountBalanceBadge'];
     const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
     elements.inputType.value = mode;
     elements.paramModelVersion.value = 'v3.1-20260211';
@@ -84,6 +85,7 @@ function browser(mode) {
             return json({ connected });
         }
         if (url.startsWith('/api/download?')) return new Response(new Blob(['model data']));
+        if (url === '/api/v3/account/balance') return json({ balance: 120.5 });
         if (url.startsWith('/api/v3/tasks/')) return json(tasks[url.split('/').pop()]);
         if (url === '/api/v3/files') return json({ file_token: `file_${++uploads}` });
         assert.equal(options.headers['X-Tripo-Key'], undefined);
@@ -421,4 +423,56 @@ test('enabling parts generation disables texture and quad options', () => {
     assert.equal(elements.paramQuad.checked, false);
     assert.equal(elements.paramQuad.disabled, true);
 });
+
+test('FBX texture packaging, pivot placement, USDZ, 3MF and account balance are supported', async () => {
+    const { elements, calls, ready } = browser('object');
+    await ready;
+
+    // Account balance badge is displayed after session verification
+    assert.match(elements.accountBalanceBadge.textContent, /120\.5/);
+    assert.match(elements.accountBalanceBadge.textContent, /\$1\.21/);
+    assert.equal(elements.accountBalanceBadge.hidden, false);
+
+    // FBX packaging and pivot placement
+    elements.paramFormat.value = 'fbx';
+    elements.paramFormat.listeners.change();
+    assert.equal(elements.packagingOption.hidden, false);
+    assert.equal(elements.paramTexturePackaging.disabled, false);
+
+    elements.paramTexturePackaging.checked = true;
+    elements.paramPivot.checked = true;
+    elements.paramTexturePackaging.listeners.change();
+    elements.paramPivot.listeners.change();
+
+    await elements.runBtn.listeners.click();
+    const convertCall = calls.find(call => call.url.endsWith('models/convert'));
+    assert.ok(convertCall);
+    assert.equal(convertCall.payload.texture_packaging, 'zip');
+    assert.equal(convertCall.payload.pivot_to_center_bottom, true);
+
+    // USDZ allows baking
+    elements.paramFormat.value = 'usdz';
+    elements.paramFormat.listeners.change();
+    assert.equal(elements.packagingOption.hidden, true);
+    assert.equal(elements.paramBake.disabled, false);
+
+    // 3MF disables baking and packaging
+    elements.paramFormat.value = '3mf';
+    elements.paramFormat.listeners.change();
+    assert.equal(elements.packagingOption.hidden, true);
+    assert.equal(elements.paramBake.disabled, true);
+    assert.equal(elements.paramBake.checked, false);
+
+    // Smart low-poly is supported on H3.1 but disabled on P2
+    elements.paramModelVersion.value = 'v3.1-20260211';
+    elements.paramModelVersion.listeners.change();
+    assert.equal(elements.paramSmartLowPoly.disabled, false);
+    elements.paramSmartLowPoly.checked = true;
+
+    elements.paramModelVersion.value = 'P2-20260801';
+    elements.paramModelVersion.listeners.change();
+    assert.equal(elements.paramSmartLowPoly.disabled, true);
+    assert.equal(elements.paramSmartLowPoly.checked, false);
+});
+
 

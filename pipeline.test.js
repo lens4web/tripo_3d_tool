@@ -22,6 +22,8 @@ test('model ranges and incompatible format combinations are rejected', () => {
     assert.throws(() => P.validateSettings({ ...base, faceLimit: '8000.5' }, { single: image }), /Face limit/);
     assert.throws(() => P.validateSettings({ ...base, format: 'obj', quad: true }, { single: image }), /requires FBX/);
     assert.throws(() => P.validateSettings({ ...base, format: 'stl', bake: true }, { single: image }), /cannot contain baked textures/);
+    assert.throws(() => P.validateSettings({ ...base, format: '3mf', bake: true }, { single: image }), /cannot contain baked textures/);
+    assert.throws(() => P.validateSettings({ ...base, model: 'P2-20260801', smartLowPoly: true }, { single: image }), /Smart Low-Poly is only supported/);
     assert.throws(() => P.validateSettings({ ...base, forceSymmetry: true, quad: false }, { single: image }), /Force symmetry/);
     assert.throws(() => P.validateSettings({ ...base, textureQuality: 'super' }, { single: image }), /Unsupported texture quality/);
     assert.throws(() => P.validateSettings({ ...base, textureSize: '123' }, { single: image }), /Unsupported texture size/);
@@ -75,6 +77,15 @@ test('V3 payloads use inputs for model and input for conversion and image-to-mod
     assert.deepEqual(P.convertPayload('model-task', { ...base, format: 'stl', bake: false }), {
         input: 'model-task', format: 'STL', bake: false
     });
+    assert.deepEqual(P.convertPayload('model-task', { ...base, format: '3mf', bake: false, pivotToCenterBottom: true }), {
+        input: 'model-task', format: '3MF', bake: false, pivot_to_center_bottom: true
+    });
+    assert.deepEqual(P.convertPayload('model-task', { ...base, format: 'usdz', bake: true }), {
+        input: 'model-task', format: 'USDZ', bake: true
+    });
+    assert.deepEqual(P.convertPayload('model-task', { ...base, format: 'fbx', texturePackaging: 'zip', pivotToCenterBottom: true }), {
+        input: 'model-task', format: 'FBX', bake: true, fbx_preset: 'mixamo', texture_packaging: 'zip', pivot_to_center_bottom: true
+    });
     assert.deepEqual(P.segmentPayload('model-task'), {
         input: 'model-task'
     });
@@ -82,6 +93,7 @@ test('V3 payloads use inputs for model and input for conversion and image-to-mod
 
 test('task URLs and cost estimates use current V3 fields and published tiers', () => {
     assert.equal(P.resultUrl({ model_url: 'https://cdn.tripo3d.ai/model.glb' }, 'model_url'), 'https://cdn.tripo3d.ai/model.glb');
+    assert.equal(P.resultUrl({ seg_model_url: 'https://cdn.tripo3d.ai/seg.glb' }, 'model_url'), 'https://cdn.tripo3d.ai/seg.glb');
     assert.throws(() => P.resultUrl({ model: { url: 'https://cdn.tripo3d.ai/model.glb' } }, 'model_url'), /no model_url/);
     assert.equal(P.estimateCredits(base).total, 50);
     assert.equal(P.estimateCredits({ ...base, inputType: 'object' }).total, 35);
@@ -122,6 +134,8 @@ test('JSON configuration parses snake_case and camelCase and exports cleanly', (
         quad: true,
         delight: true,
         enable_image_autofix: true,
+        texture_packaging: 'zip',
+        pivot_to_center_bottom: true,
         custom_seed: 42
     });
     const parsed = P.parseJsonConfig(jsonStr);
@@ -134,13 +148,17 @@ test('JSON configuration parses snake_case and camelCase and exports cleanly', (
     assert.equal(parsed.quad, true);
     assert.equal(parsed.delight, true);
     assert.equal(parsed.enableImageAutofix, true);
+    assert.equal(parsed.texturePackaging, 'zip');
+    assert.equal(parsed.pivotToCenterBottom, true);
     assert.deepEqual(parsed.customParams, { custom_seed: 42 });
 
-    const exported = JSON.parse(P.exportJsonConfig(parsed));
+    const exported = JSON.parse(P.exportJsonConfig({ ...parsed, format: 'fbx' }));
     assert.equal(exported.model, 'v3.1-20260211');
     assert.equal(exported.geometryQuality, 'detailed');
     assert.equal(exported.texture, false);
     assert.equal(exported.bake, false);
+    assert.equal(exported.texturePackaging, 'zip');
+    assert.equal(exported.pivotToCenterBottom, true);
     assert.equal(exported.custom_seed, 42);
 });
 

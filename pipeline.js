@@ -35,14 +35,14 @@
     };
     const MODEL_COST = Object.fromEntries(Object.entries(MODEL_INFO).map(([k, v]) => [k, v.credits]));
     const FACE_RANGES = Object.fromEntries(Object.entries(MODEL_INFO).map(([k, v]) => [k, [v.faceMin, v.faceMax]]));
-    const FORMATS = ['fbx', 'gltf', 'obj', 'stl'];
+    const FORMATS = ['fbx', 'gltf', 'obj', 'stl', 'usdz', '3mf'];
     const VIEWS = ['front', 'left', 'back', 'right'];
     const TEXTURE_QUALITIES = ['fast', 'standard', 'detailed', 'extreme'];
     const GEOMETRY_QUALITIES = ['standard', 'detailed'];
     const RIG_SPECS = ['mixamo', 'tripo', 'actorcore', 'unity', 'unreal', 'vrm'];
 
     function faceRange(model, quad = false, geometryQuality = 'standard', smartLowPoly = false) {
-        if (smartLowPoly) {
+        if (smartLowPoly && ['v3.1-20260211', 'v3.0-20250812'].includes(model)) {
             return quad ? [500, 10000] : [500, 20000];
         }
         if (model === 'P2-20260801') {
@@ -79,7 +79,7 @@
             ? (textureQuality === 'detailed' ? 10 : (textureQuality === 'extreme' ? 20 : 0))
             : 0;
         const geometry = (geometryQuality === 'detailed' && ['v3.1-20260211', 'v3.0-20250812'].includes(model)) ? 20 : 0;
-        const smartLowPolyAddon = smartLowPoly ? 10 : 0;
+        const smartLowPolyAddon = (smartLowPoly && ['v3.1-20260211', 'v3.0-20250812'].includes(model)) ? 10 : 0;
         const partsAddon = generateParts ? 20 : 0;
         const segmentation = segment ? 40 : 0;
         const conversion = quad ? 10 : 5;
@@ -111,7 +111,7 @@
         if (settings.quad && settings.model === 'P1-20260311') throw new Error('P1 does not support quad topology; choose P2 or disable quad');
         if (settings.quad && settings.model === 'v2.5-20250123') throw new Error('H2.5 does not support quad topology');
         if (settings.forceSymmetry && !settings.quad) throw new Error('Force symmetry requires quad topology');
-        if (settings.bake && settings.format === 'stl') throw new Error('STL cannot contain baked textures');
+        if (settings.bake && ['stl', '3mf'].includes(settings.format)) throw new Error(`${settings.format.toUpperCase()} cannot contain baked textures`);
         if (settings.autoRig && settings.inputType !== 'object' && !['fbx', 'gltf'].includes(settings.format)) {
             throw new Error('Auto-rigging requires FBX or GLTF output');
         }
@@ -129,6 +129,9 @@
         if (settings.generateParts) {
             if (settings.quad) throw new Error('Part generation does not support quad topology');
             if (settings.smartLowPoly) throw new Error('Part generation is incompatible with smart low-poly');
+        }
+        if (settings.smartLowPoly && !['v3.1-20260211', 'v3.0-20250812'].includes(settings.model)) {
+            throw new Error('Smart Low-Poly is only supported on H3.1 and H3.0');
         }
         if (settings.inputType === 'multiview') {
             validateImage(files.front, 'Front');
@@ -197,18 +200,27 @@
     }
 
     function convertPayload(taskId, settings) {
-        const canBake = settings.texture !== false && !settings.generateParts && settings.format !== 'stl';
+        const isUntexturedFormat = ['stl', '3mf'].includes(settings.format);
+        const canBake = settings.texture !== false && !settings.generateParts && !isUntexturedFormat;
         const bake = canBake ? (settings.bake !== false) : false;
         const payload = { input: taskId, format: settings.format.toUpperCase(), bake };
         if (bake && settings.textureSize) {
             payload.texture_size = Number(settings.textureSize);
+        }
+        if (settings.textureFormat && bake) {
+            payload.texture_format = String(settings.textureFormat).toUpperCase();
+        }
+        if (settings.format === 'fbx') {
+            payload.fbx_preset = settings.fbxPreset || 'mixamo';
+            if (settings.texturePackaging) payload.texture_packaging = settings.texturePackaging;
         }
         if (settings.quad && settings.format === 'fbx') {
             payload.quad = true;
             if (settings.forceSymmetry) payload.force_symmetry = true;
             if (settings.faceLimit !== '') payload.face_limit = Number(settings.faceLimit);
         }
-        if (settings.format === 'fbx') payload.fbx_preset = settings.fbxPreset || 'mixamo';
+        if (settings.pivotToCenterBottom) payload.pivot_to_center_bottom = true;
+        if (settings.flattenBottom) payload.flatten_bottom = true;
         return payload;
     }
 
@@ -246,6 +258,10 @@
             bake: ['bake'],
             textureSize: ['textureSize', 'texture_size'],
             textureQuality: ['textureQuality', 'texture_quality'],
+            texturePackaging: ['texturePackaging', 'texture_packaging', 'packaging'],
+            pivotToCenterBottom: ['pivotToCenterBottom', 'pivot_to_center_bottom', 'pivot'],
+            flattenBottom: ['flattenBottom', 'flatten_bottom'],
+            textureFormat: ['textureFormat', 'texture_format'],
             geometryQuality: ['geometryQuality', 'geometry_quality'],
             delight: ['delight'],
             smartLowPoly: ['smartLowPoly', 'smart_low_poly'],
@@ -288,7 +304,7 @@
 
     function exportJsonConfig(settings) {
         const hasTexture = settings.texture !== false && !settings.generateParts;
-        const canBake = hasTexture && settings.format !== 'stl';
+        const canBake = hasTexture && !['stl', '3mf'].includes(settings.format);
         const out = {
             model: settings.model || 'v3.1-20260211',
             inputType: settings.inputType || 'side',
@@ -306,6 +322,9 @@
             rigSpec: settings.rigSpec || 'mixamo',
             segment: !!settings.segment
         };
+        if (settings.format === 'fbx' && settings.texturePackaging) out.texturePackaging = settings.texturePackaging;
+        if (settings.pivotToCenterBottom) out.pivotToCenterBottom = true;
+        if (settings.flattenBottom) out.flattenBottom = true;
         if (settings.smartLowPoly) out.smartLowPoly = true;
         if (settings.generateParts) out.generateParts = true;
         if (settings.enableImageAutofix) out.enableImageAutofix = true;
@@ -320,14 +339,19 @@
         try {
             const parsed = new URL(raw);
             if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.port) return null;
-            if (parsed.hostname !== 'cdn.tripo3d.ai' && !parsed.hostname.endsWith('.cdn.tripo3d.ai') &&
-                parsed.hostname !== 'tripo-data.rg1.data.tripo3d.com') return null;
+            const host = parsed.hostname.toLowerCase();
+            const isTripoAi = host === 'tripo3d.ai' || host.endsWith('.tripo3d.ai');
+            const isTripoCom = host === 'tripo3d.com' || host.endsWith('.tripo3d.com');
+            if (!isTripoAi && !isTripoCom) return null;
             return parsed;
         } catch { return null; }
     }
 
     function resultUrl(output, field) {
-        const url = output && (output[field] || output.generate_multiview_image?.[field]);
+        let url = output && (output[field] || output.generate_multiview_image?.[field]);
+        if (!url && field === 'model_url' && output) {
+            url = output.seg_model_url || output.pbr_model || output.base_model;
+        }
         if (typeof url !== 'string') throw new Error(`Task result has no ${field}`);
         const parsed = allowedResultUrl(url);
         if (!parsed) throw new Error(`Task result ${field} is not a supported Tripo file URL`);
